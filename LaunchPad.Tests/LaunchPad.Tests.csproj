@@ -18,7 +18,7 @@
     <Using Include="Xunit" />
   </ItemGroup>
 
-  <ItemGroup>
+<ItemGroup>
     <ProjectReference Include="..\LaunchPad.Shared\LaunchPad.Shared.csproj" />
     <ProjectReference Include="..\LaunchPad.Companion\LaunchPad.Companion.csproj" />
   </ItemGroup>

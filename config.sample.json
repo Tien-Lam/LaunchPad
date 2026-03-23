@@ -1,0 +1,46 @@
+{
+  "items": [
+    {
+      "name": "Notepad",
+      "type": "exe",
+      "path": "C:\\Windows\\notepad.exe",
+      "args": null,
+      "icon": null
+    },
+    {
+      "name": "Calculator",
+      "type": "exe",
+      "path": "C:\\Windows\\System32\\calc.exe",
+      "args": null,
+      "icon": null
+    },
+    {
+      "name": "YouTube",
+      "type": "url",
+      "path": "https://youtube.com",
+      "args": null,
+      "icon": null
+    },
+    {
+      "name": "GitHub",
+      "type": "url",
+      "path": "https://github.com",
+      "args": null,
+      "icon": null
+    },
+    {
+      "name": "Spotify",
+      "type": "store",
+      "path": "spotify:",
+      "args": null,
+      "icon": null
+    },
+    {
+      "name": "Xbox",
+      "type": "store",
+      "path": "xbox:",
+      "args": null,
+      "icon": null
+    }
+  ]
+}

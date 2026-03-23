@@ -75,7 +75,8 @@ public static class ConfigLoader
 
     public static string GetDefaultConfigPath()
     {
-        var localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+        var localAppData = Environment.GetEnvironmentVariable("LOCALAPPDATA")
+            ?? Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
         return System.IO.Path.Combine(localAppData, "LaunchPad", "config.json");
     }
 }

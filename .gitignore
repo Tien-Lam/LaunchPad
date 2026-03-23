@@ -1,3 +1,9 @@
+bin/
+obj/
+.vs/
+*.user
+AppPackages/
+.superpowers/
 
 # Beads / Dolt files (added by bd init)
 .dolt/

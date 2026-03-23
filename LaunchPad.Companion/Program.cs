@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using LaunchPad.Shared;
 using Windows.ApplicationModel;
 using Windows.ApplicationModel.AppService;
 using Windows.Foundation.Collections;
@@ -63,6 +64,9 @@ class Program
                 case "fetch-favicon":
                     response = await HandleFetchFaviconAsync(message);
                     break;
+                case "add-exe":
+                    response = HandleAddExe(message);
+                    break;
                 default:
                     response = new ValueSet { ["status"] = "error", ["error"] = $"Unknown action: {action}" };
                     break;
@@ -114,5 +118,29 @@ class Program
         var response = new ValueSet { ["status"] = success ? "ok" : "error" };
         if (iconPath != null) response["iconPath"] = iconPath;
         return response;
+    }
+
+    private static ValueSet HandleAddExe(ValueSet message)
+    {
+        var configPath = message["configPath"] as string ?? ConfigLoader.GetDefaultConfigPath();
+
+        var exePath = ExePicker.ShowPickerDialog();
+        if (exePath == null)
+            return new ValueSet { ["status"] = "cancelled" };
+
+        var displayName = ExePicker.GetDisplayName(exePath);
+
+        var loadResult = ConfigLoader.Load(configPath);
+        var config = loadResult.Config ?? new LaunchPadConfig();
+
+        ExePicker.AppendToConfig(config, exePath, displayName);
+        ConfigLoader.Save(configPath, config);
+
+        return new ValueSet
+        {
+            ["status"] = "ok",
+            ["name"] = displayName,
+            ["path"] = exePath
+        };
     }
 }

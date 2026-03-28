@@ -33,6 +33,19 @@ public class EditorModelTests
     }
 
     [Fact]
+    public void AddStore_AppendsStoreItemAndSelectsIt()
+    {
+        var model = new EditorModel();
+        model.AddStore("Spotify", @"shell:AppsFolder\SpotifyAB.SpotifyMusic_zpdnekdrzrea0!Spotify");
+
+        Assert.Single(model.Items);
+        Assert.Equal("Spotify", model.Items[0].Name);
+        Assert.Equal(LaunchItemType.Store, model.Items[0].Type);
+        Assert.Equal(@"shell:AppsFolder\SpotifyAB.SpotifyMusic_zpdnekdrzrea0!Spotify", model.Items[0].Path);
+        Assert.Equal(0, model.SelectedIndex);
+    }
+
+    [Fact]
     public void AddMultiple_SelectsLastAdded()
     {
         var model = new EditorModel();

@@ -38,6 +38,17 @@ public class EditorModel
         SelectedIndex = Items.Count - 1;
     }
 
+    public void AddStore(string name, string path)
+    {
+        Items.Add(new LaunchItemConfig
+        {
+            Name = name,
+            Type = LaunchItemType.Store,
+            Path = path
+        });
+        SelectedIndex = Items.Count - 1;
+    }
+
     public bool Remove(int index)
     {
         if (index < 0 || index >= Items.Count) return false;

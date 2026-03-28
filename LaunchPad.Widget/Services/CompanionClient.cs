@@ -9,6 +9,8 @@ namespace LaunchPad.Widget.Services;
 
 public static class CompanionClient
 {
+    public static event Action? ConfigUpdated;
+
     public static async Task<(ConfigLoadStatus Status, LaunchPadConfig? Config, string? ConfigPath, string? Error)> LoadConfigAsync()
     {
         var connection = App.CompanionConnection;
@@ -98,28 +100,30 @@ public static class CompanionClient
         return null;
     }
 
-    public static async Task<(bool Success, string? Name, string? Path)> AddExeAsync(string configPath)
+    public static async Task<bool> OpenEditorAsync()
     {
         var connection = App.CompanionConnection;
-        if (connection == null) return (false, null, null);
+        if (connection == null) return false;
 
+        var configPath = ConfigLoader.GetDefaultConfigPath();
         var request = new ValueSet
         {
-            ["action"] = "add-exe",
+            ["action"] = "open-editor",
             ["configPath"] = configPath
         };
 
         var response = await connection.SendMessageAsync(request);
-        if (response.Status != AppServiceResponseStatus.Success) return (false, null, null);
+        if (response.Status != AppServiceResponseStatus.Success) return false;
 
-        var status = response.Message["status"] as string;
-        if (status == "ok")
+        return response.Message["status"] as string == "ok";
+    }
+
+    public static void OnCompanionMessage(AppServiceConnection sender, AppServiceRequestReceivedEventArgs args)
+    {
+        var message = args.Request.Message;
+        if (message.ContainsKey("action") && message["action"] as string == "config-updated")
         {
-            var name = response.Message["name"] as string;
-            var path = response.Message["path"] as string;
-            return (true, name, path);
+            ConfigUpdated?.Invoke();
         }
-
-        return (false, null, null);
     }
 }

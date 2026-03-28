@@ -64,6 +64,8 @@ sealed partial class App : Application
             _companionConnection = details.AppServiceConnection;
             CompanionConnection = _companionConnection;
 
+            _companionConnection.RequestReceived += Services.CompanionClient.OnCompanionMessage;
+
             args.TaskInstance.Canceled += (_, _) =>
             {
                 _appServiceDeferral?.Complete();

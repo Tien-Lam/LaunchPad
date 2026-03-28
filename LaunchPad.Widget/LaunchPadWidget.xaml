@@ -56,17 +56,18 @@
             </GridView.ItemTemplate>
         </GridView>
 
-        <!-- Add app button -->
-        <Button x:Name="AddButton"
-                Content="+"
-                FontSize="20" FontWeight="Bold"
+        <!-- Edit config button -->
+        <Button x:Name="EditButton"
+                Content="&#xE713;"
+                FontFamily="Segoe MDL2 Assets"
+                FontSize="16"
                 Width="40" Height="40"
                 CornerRadius="20"
                 HorizontalAlignment="Right"
                 VerticalAlignment="Bottom"
                 Margin="0,0,8,8"
-                Click="OnAddClick"
-                ToolTipService.ToolTip="Add application" />
+                Click="OnEditClick"
+                ToolTipService.ToolTip="Edit configuration" />
 
         <!-- Empty/error state -->
         <StackPanel x:Name="EmptyState"

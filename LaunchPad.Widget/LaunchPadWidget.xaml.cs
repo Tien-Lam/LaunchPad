@@ -40,6 +40,14 @@ public sealed partial class LaunchPadWidget : Page
         }
 
         await LoadConfigAsync();
+
+        CompanionClient.ConfigUpdated += async () =>
+        {
+            await Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, async () =>
+            {
+                await LoadConfigAsync();
+            });
+        };
     }
 
     private async Task LoadConfigAsync()
@@ -180,20 +188,16 @@ public sealed partial class LaunchPadWidget : Page
             grid.Background = (Brush)Resources["TileBackground"];
     }
 
-    private async void OnAddClick(object sender, RoutedEventArgs e)
+    private async void OnEditClick(object sender, RoutedEventArgs e)
     {
-        AddButton.IsEnabled = false;
+        EditButton.IsEnabled = false;
         try
         {
-            var configPath = ConfigLoader.GetDefaultConfigPath();
-            var (success, name, path) = await CompanionClient.AddExeAsync(configPath);
-
-            if (success)
-                await LoadConfigAsync();
+            await CompanionClient.OpenEditorAsync();
         }
         finally
         {
-            AddButton.IsEnabled = true;
+            EditButton.IsEnabled = true;
         }
     }
 

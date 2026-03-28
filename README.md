@@ -54,6 +54,16 @@ msbuild LaunchPad.sln /p:Configuration=Debug /p:Platform=x64 /restore
 
 Builds the full solution with MSBuild and registers the package via loose-file deployment (no signing needed). Requires Visual Studio with the UWP workload installed. After deploying, open Game Bar (Win+G) and enable the LaunchPad widget from the widget menu.
 
+## Uninstall
+
+```powershell
+# Remove the registered package
+Get-AppxPackage *LaunchPad* | Remove-AppxPackage
+
+# Remove config and cached icons
+Remove-Item "$env:LOCALAPPDATA\LaunchPad" -Recurse -Force
+```
+
 ## Configuration
 
 Items are stored in `%LOCALAPPDATA%\LaunchPad\config.json`. Use the built-in editor (gear button in the widget) to manage items, or edit the JSON directly:

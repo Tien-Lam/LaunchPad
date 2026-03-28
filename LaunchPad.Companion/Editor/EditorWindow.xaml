@@ -16,11 +16,11 @@
                 <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.GrayTextBrushKey}}"/>
                 <Setter Property="Margin" Value="0,0,0,4"/>
             </Style>
-            <Style x:Key="AccentButton" TargetType="Button">
+            <Style x:Key="AccentButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
                 <Setter Property="Background" Value="#0E639C"/>
                 <Setter Property="Foreground" Value="White"/>
             </Style>
-            <Style x:Key="DangerButton" TargetType="Button">
+            <Style x:Key="DangerButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
                 <Setter Property="Background" Value="#6E2020"/>
                 <Setter Property="Foreground" Value="#F0A0A0"/>
             </Style>

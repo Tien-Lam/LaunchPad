@@ -1,0 +1,149 @@
+<Window x:Class="LaunchPad.Companion.Editor.EditorWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="LaunchPad — Config Editor"
+        Width="500" Height="450"
+        MinWidth="400" MinHeight="350"
+        WindowStartupLocation="CenterScreen"
+        Background="#1E1E1E">
+    <Window.Resources>
+        <Style x:Key="DarkTextBox" TargetType="TextBox">
+            <Setter Property="Background" Value="#3C3C3C"/>
+            <Setter Property="Foreground" Value="#E0E0E0"/>
+            <Setter Property="BorderBrush" Value="#555555"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="5,3"/>
+            <Setter Property="FontSize" Value="13"/>
+        </Style>
+        <Style x:Key="AccentButton" TargetType="Button">
+            <Setter Property="Background" Value="#0E639C"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="12,4"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+        <Style x:Key="ToolbarButton" TargetType="Button">
+            <Setter Property="Background" Value="#3C3C3C"/>
+            <Setter Property="Foreground" Value="#CCCCCC"/>
+            <Setter Property="BorderBrush" Value="#555555"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="8,4"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+        <Style x:Key="FieldLabel" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="Foreground" Value="#888888"/>
+            <Setter Property="Margin" Value="0,0,0,4"/>
+        </Style>
+    </Window.Resources>
+
+    <DockPanel>
+        <!-- Bottom bar -->
+        <Border DockPanel.Dock="Bottom" Background="#252526"
+                BorderBrush="#3C3C3C" BorderThickness="0,1,0,0"
+                Padding="12,8">
+            <DockPanel>
+                <TextBlock x:Name="ItemCountLabel" Text="0 items"
+                           Foreground="#666666" FontSize="11"
+                           VerticalAlignment="Center"/>
+                <Button x:Name="SaveButton" Content="Save &amp; Refresh"
+                        Style="{StaticResource AccentButton}"
+                        HorizontalAlignment="Right" DockPanel.Dock="Right"
+                        Click="OnSaveClick"/>
+            </DockPanel>
+        </Border>
+
+        <!-- Toolbar -->
+        <Border DockPanel.Dock="Top" Background="#2D2D2D"
+                BorderBrush="#3C3C3C" BorderThickness="0,0,0,1"
+                Padding="12,6">
+            <StackPanel Orientation="Horizontal">
+                <Button Content="+ Add EXE" Style="{StaticResource AccentButton}"
+                        Click="OnAddExeClick" Margin="0,0,6,0"/>
+                <Button Content="+ Add URL" Style="{StaticResource AccentButton}"
+                        Click="OnAddUrlClick" Margin="0,0,6,0"/>
+                <Border Width="1" Background="#3C3C3C" Margin="6,0"/>
+                <Button x:Name="MoveUpButton" Content="&#x25B2;"
+                        Style="{StaticResource ToolbarButton}"
+                        Click="OnMoveUpClick" Margin="6,0,4,0"/>
+                <Button x:Name="MoveDownButton" Content="&#x25BC;"
+                        Style="{StaticResource ToolbarButton}"
+                        Click="OnMoveDownClick" Margin="0,0,6,0"/>
+                <Border Width="1" Background="#3C3C3C" Margin="6,0"/>
+                <Button x:Name="RemoveButton" Content="Remove"
+                        Background="#5A1D1D" Foreground="#E0E0E0"
+                        BorderBrush="#8B3A3A" BorderThickness="1"
+                        Padding="12,4" FontSize="12" Cursor="Hand"
+                        Click="OnRemoveClick" Margin="6,0,0,0"/>
+            </StackPanel>
+        </Border>
+
+        <!-- Title bar -->
+        <Border DockPanel.Dock="Top" Background="#252526"
+                BorderBrush="#3C3C3C" BorderThickness="0,0,0,1"
+                Padding="12,8">
+            <TextBlock Text="LaunchPad — Config Editor"
+                       Foreground="#CCCCCC" FontSize="13"/>
+        </Border>
+
+        <!-- Main content: list + edit panel -->
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="180"/>
+                <ColumnDefinition Width="1"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Left: Item list -->
+            <ListBox x:Name="ItemList" Grid.Column="0"
+                     Background="#252526" BorderThickness="0"
+                     Foreground="#E0E0E0"
+                     SelectionChanged="OnItemSelectionChanged"
+                     DisplayMemberPath="Name"/>
+
+            <!-- Separator -->
+            <Border Grid.Column="1" Background="#3C3C3C"/>
+
+            <!-- Right: Edit panel -->
+            <ScrollViewer Grid.Column="2" VerticalScrollBarVisibility="Auto"
+                          Background="#1E1E1E">
+                <StackPanel x:Name="EditPanel" Margin="16" Visibility="Collapsed">
+                    <TextBlock Text="NAME" Style="{StaticResource FieldLabel}"/>
+                    <TextBox x:Name="NameBox" Style="{StaticResource DarkTextBox}"
+                             Margin="0,0,0,14"/>
+
+                    <TextBlock Text="TYPE" Style="{StaticResource FieldLabel}"/>
+                    <TextBlock x:Name="TypeLabel" Foreground="#888888"
+                               FontSize="13" Margin="0,0,0,14"
+                               Padding="6,5"
+                               Background="#3C3C3C"/>
+
+                    <TextBlock Text="PATH" Style="{StaticResource FieldLabel}"/>
+                    <DockPanel Margin="0,0,0,14">
+                        <Button x:Name="BrowsePathButton" Content="Browse"
+                                Style="{StaticResource ToolbarButton}"
+                                DockPanel.Dock="Right" Margin="4,0,0,0"
+                                Click="OnBrowsePathClick"/>
+                        <TextBox x:Name="PathBox" Style="{StaticResource DarkTextBox}"/>
+                    </DockPanel>
+
+                    <StackPanel x:Name="ArgsPanel">
+                        <TextBlock Text="ARGUMENTS" Style="{StaticResource FieldLabel}"/>
+                        <TextBox x:Name="ArgsBox" Style="{StaticResource DarkTextBox}"
+                                 Margin="0,0,0,14"/>
+                    </StackPanel>
+
+                    <TextBlock Text="CUSTOM ICON" Style="{StaticResource FieldLabel}"/>
+                    <DockPanel Margin="0,0,0,14">
+                        <Button Content="Browse" Style="{StaticResource ToolbarButton}"
+                                DockPanel.Dock="Right" Margin="4,0,0,0"
+                                Click="OnBrowseIconClick"/>
+                        <TextBox x:Name="IconBox" Style="{StaticResource DarkTextBox}"/>
+                    </DockPanel>
+                </StackPanel>
+            </ScrollViewer>
+        </Grid>
+    </DockPanel>
+</Window>

@@ -143,7 +143,7 @@ public sealed partial class LaunchPadWidget : Page
             // Custom icon takes priority over type-based extraction
             if (!string.IsNullOrEmpty(item.CustomIconPath))
             {
-                iconData = await CompanionClient.LoadCustomIconAsync(item.CustomIconPath);
+                iconData = await CompanionClient.LoadCustomIconAsync(item.CustomIconPath!);
             }
 
             // Fall back to type-based extraction

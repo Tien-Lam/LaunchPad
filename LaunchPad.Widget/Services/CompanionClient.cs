@@ -28,7 +28,7 @@ public static class CompanionClient
 
         if (status == "success" && msg.ContainsKey("json"))
         {
-            var json = msg["json"] as string;
+            var json = msg["json"] as string ?? "";
             var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
             var config = JsonSerializer.Deserialize<LaunchPadConfig>(json, options);
             return (ConfigLoadStatus.Success, config, configPath, null);

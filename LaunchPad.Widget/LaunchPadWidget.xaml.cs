@@ -57,17 +57,18 @@ public sealed partial class LaunchPadWidget : Page
         }
 
         // Honor Game Bar opacity setting for compact/pinned mode
+        // Apply to background only — not page Opacity, which washes out text and icons
         var widget = App.Widget;
         if (widget != null)
         {
             try
             {
-                this.Opacity = widget.RequestedOpacity / 100.0;
+                ApplyBackgroundOpacity(widget.RequestedOpacity / 100.0);
                 widget.RequestedOpacityChanged += (opacitySender, args) =>
                 {
                     _ = Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, () =>
                     {
-                        this.Opacity = opacitySender.RequestedOpacity / 100.0;
+                        ApplyBackgroundOpacity(opacitySender.RequestedOpacity / 100.0);
                     });
                 };
             }
@@ -182,6 +183,12 @@ public sealed partial class LaunchPadWidget : Page
                 SetDefaultIcon(item);
             }
         }
+    }
+
+    private void ApplyBackgroundOpacity(double opacity)
+    {
+        var alpha = (byte)(opacity * 255);
+        this.Background = new SolidColorBrush(Windows.UI.Color.FromArgb(alpha, 0x20, 0x20, 0x20));
     }
 
     private void SetDefaultIcon(LaunchItem item)

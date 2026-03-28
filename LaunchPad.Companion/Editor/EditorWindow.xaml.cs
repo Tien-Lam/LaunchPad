@@ -1,6 +1,4 @@
 using System;
-using System.Collections.Generic;
-using System.IO;
 using System.Windows;
 using System.Windows.Forms;
 using LaunchPad.Shared;
@@ -11,7 +9,7 @@ public partial class EditorWindow : Window
 {
     private readonly string _configPath;
     private readonly Action? _onSaved;
-    private List<LaunchItemConfig> _items = new();
+    private readonly EditorModel _model = new();
     private int _previousIndex = -1;
 
     public EditorWindow(string configPath, Action? onSaved)
@@ -24,39 +22,38 @@ public partial class EditorWindow : Window
 
     private void LoadItems()
     {
-        var result = ConfigLoader.Load(_configPath);
-        _items = result.Config?.Items ?? new List<LaunchItemConfig>();
-        RefreshList(-1);
+        _model.Load(_configPath);
+        RefreshList(_model.SelectedIndex);
     }
 
     private void RefreshList(int selectIndex)
     {
         ItemList.SelectionChanged -= OnItemSelectionChanged;
         ItemList.Items.Clear();
-        foreach (var item in _items)
+        foreach (var item in _model.Items)
             ItemList.Items.Add(new ListBoxEntry(item.Name, item.Type.ToString().ToLowerInvariant()));
 
-        if (_items.Count == 0)
+        if (_model.Items.Count == 0)
         {
             EditPanel.Visibility = Visibility.Collapsed;
             _previousIndex = -1;
         }
         else
         {
-            var idx = Math.Clamp(selectIndex, 0, _items.Count - 1);
+            var idx = Math.Clamp(selectIndex, 0, _model.Items.Count - 1);
             ItemList.SelectedIndex = idx;
             _previousIndex = idx;
             ShowItemInForm(idx);
         }
-        ItemCountLabel.Text = $"{_items.Count} item{(_items.Count == 1 ? "" : "s")}";
+        ItemCountLabel.Text = $"{_model.Items.Count} item{(_model.Items.Count == 1 ? "" : "s")}";
         ItemList.SelectionChanged += OnItemSelectionChanged;
     }
 
     private void SyncFormToItem()
     {
         var idx = _previousIndex;
-        if (idx < 0 || idx >= _items.Count) return;
-        var item = _items[idx];
+        if (idx < 0 || idx >= _model.Items.Count) return;
+        var item = _model.Items[idx];
         item.Name = NameBox.Text;
         item.Path = PathBox.Text;
         item.Args = string.IsNullOrWhiteSpace(ArgsBox.Text) ? null : ArgsBox.Text;
@@ -65,13 +62,13 @@ public partial class EditorWindow : Window
 
     private void ShowItemInForm(int index)
     {
-        if (index < 0 || index >= _items.Count)
+        if (index < 0 || index >= _model.Items.Count)
         {
             EditPanel.Visibility = Visibility.Collapsed;
             return;
         }
 
-        var item = _items[index];
+        var item = _model.Items[index];
         EditPanel.Visibility = Visibility.Visible;
         NameBox.Text = item.Name;
         TypeLabel.Text = item.Type.ToString().ToLowerInvariant();
@@ -97,54 +94,39 @@ public partial class EditorWindow : Window
         if (exePath == null) return;
 
         var displayName = ExePicker.GetDisplayName(exePath);
-        var newItem = new LaunchItemConfig
-        {
-            Name = displayName,
-            Type = LaunchItemType.Exe,
-            Path = exePath
-        };
         SyncFormToItem();
-        _items.Add(newItem);
-        RefreshList(_items.Count - 1);
+        _model.AddExe(exePath, displayName);
+        RefreshList(_model.SelectedIndex);
     }
 
     private void OnAddUrlClick(object sender, RoutedEventArgs e)
     {
-        var newItem = new LaunchItemConfig
-        {
-            Name = "New URL",
-            Type = LaunchItemType.Url,
-            Path = "https://"
-        };
         SyncFormToItem();
-        _items.Add(newItem);
-        RefreshList(_items.Count - 1);
+        _model.AddUrl();
+        RefreshList(_model.SelectedIndex);
     }
 
     private void OnRemoveClick(object sender, RoutedEventArgs e)
     {
         var idx = ItemList.SelectedIndex;
-        if (idx < 0 || idx >= _items.Count) return;
-        _items.RemoveAt(idx);
-        RefreshList(idx);
+        _model.Remove(idx);
+        RefreshList(_model.SelectedIndex);
     }
 
     private void OnMoveUpClick(object sender, RoutedEventArgs e)
     {
         var idx = ItemList.SelectedIndex;
-        if (idx <= 0) return;
         SyncFormToItem();
-        (_items[idx], _items[idx - 1]) = (_items[idx - 1], _items[idx]);
-        RefreshList(idx - 1);
+        _model.MoveUp(idx);
+        RefreshList(_model.SelectedIndex);
     }
 
     private void OnMoveDownClick(object sender, RoutedEventArgs e)
     {
         var idx = ItemList.SelectedIndex;
-        if (idx < 0 || idx >= _items.Count - 1) return;
         SyncFormToItem();
-        (_items[idx], _items[idx + 1]) = (_items[idx + 1], _items[idx]);
-        RefreshList(idx + 1);
+        _model.MoveDown(idx);
+        RefreshList(_model.SelectedIndex);
     }
 
     private void OnBrowsePathClick(object sender, RoutedEventArgs e)
@@ -174,9 +156,7 @@ public partial class EditorWindow : Window
     private void OnSaveClick(object sender, RoutedEventArgs e)
     {
         SyncFormToItem();
-        var config = new LaunchPadConfig { Items = _items };
-        ConfigLoader.Save(_configPath, config);
-        _onSaved?.Invoke();
+        _model.Save(_configPath, _onSaved);
     }
 }
 

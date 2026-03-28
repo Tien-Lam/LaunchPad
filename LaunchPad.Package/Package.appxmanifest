@@ -54,7 +54,6 @@
                 <ActivateAfterInstall>true</ActivateAfterInstall>
                 <FavoriteAfterInstall>true</FavoriteAfterInstall>
                 <Window>
-                  <AllowForegroundTransparency>true</AllowForegroundTransparency>
                   <Size>
                     <Height>350</Height>
                     <Width>400</Width>

@@ -15,32 +15,22 @@ class Program
 
     static async Task Main()
     {
-        Console.WriteLine("[LaunchPad Companion] Starting...");
+        using var mutex = new Mutex(true, "Local\\LaunchPadCompanion", out bool created);
+        if (!created)
+            return;
 
-        // Companion connects as CLIENT to the widget's App Service.
-        // The App Service connection is bidirectional: the widget (server side)
-        // sends requests via SendMessageAsync, and the companion handles them
-        // via RequestReceived. This is the standard Desktop Bridge pattern.
         _connection = new AppServiceConnection
         {
             AppServiceName = "com.launchpad.service",
             PackageFamilyName = Package.Current.Id.FamilyName
         };
         _connection.RequestReceived += OnRequestReceived;
-        _connection.ServiceClosed += (_, _) =>
-        {
-            Console.WriteLine("[LaunchPad Companion] Service closed. Exiting.");
-            ExitEvent.Set();
-        };
+        _connection.ServiceClosed += (_, _) => ExitEvent.Set();
 
         var status = await _connection.OpenAsync();
         if (status != AppServiceConnectionStatus.Success)
-        {
-            Console.WriteLine($"[LaunchPad Companion] Failed to connect: {status}");
             return;
-        }
 
-        Console.WriteLine("[LaunchPad Companion] Connected to App Service. Waiting for requests...");
         ExitEvent.WaitOne();
     }
 

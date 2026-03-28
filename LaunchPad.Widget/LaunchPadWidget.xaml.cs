@@ -172,15 +172,13 @@ public sealed partial class LaunchPadWidget : Page
     private void OnTilePointerEntered(object sender, PointerRoutedEventArgs e)
     {
         if (sender is Grid grid)
-            grid.Background = (Brush)Resources["SystemControlBackgroundListMediumBrush"]
-                ?? new SolidColorBrush(Windows.UI.Colors.Gray) { Opacity = 0.2 };
+            grid.Background = (Brush)Resources["TileBackgroundHover"];
     }
 
     private void OnTilePointerExited(object sender, PointerRoutedEventArgs e)
     {
         if (sender is Grid grid)
-            grid.Background = (Brush)Resources["SystemControlBackgroundListLowBrush"]
-                ?? new SolidColorBrush(Windows.UI.Colors.Transparent);
+            grid.Background = (Brush)Resources["TileBackground"];
     }
 
     private async void OnAddClick(object sender, RoutedEventArgs e)

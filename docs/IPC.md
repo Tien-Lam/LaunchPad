@@ -8,7 +8,7 @@ Communication uses **Windows App Service** (`Windows.ApplicationModel.AppService
 
 - **Service name:** `com.launchpad.service`
 - **Registration:** Declared in `Package.appxmanifest` under `<uap:Extension Category="windows.appService">`
-- **Direction:** Request/response. The widget sends requests; the companion handles them and returns responses via `SendResponseAsync`.
+- **Direction:** Primarily request/response (widget sends requests, companion responds via `SendResponseAsync`). The companion can also send unsolicited push messages to the widget (e.g., `config-updated`).
 
 The App Service runs in-process with the widget (background task), giving the companion a direct pipe into the widget's process. Both processes live in the same MSIX package.
 
@@ -301,59 +301,65 @@ ValueSet {
 
 ---
 
-### `add-exe`
+### `open-editor`
 
-Opens a native Win32 file picker dialog (on a STA thread), lets the user select an EXE, extracts a display name from the file's version info, appends the entry to the config file, and returns the result. Deduplicates by path (case-insensitive).
+Widget requests the companion to open the WPF config editor window.
 
 **Request:**
 
 | Key          | Type   | Required | Description                           |
 |--------------|--------|----------|---------------------------------------|
-| `action`     | string | yes      | `"add-exe"`                           |
-| `configPath` | string | yes      | Path to the config file to update     |
+| `action`     | string | yes      | `"open-editor"`                       |
+| `configPath` | string | yes      | Path to the config file to edit       |
 
-**Response (success):**
+**Response:**
 
-| Key      | Type   | Condition  | Description                                   |
-|----------|--------|------------|-----------------------------------------------|
-| `status` | string | always     | `"ok"`                                        |
-| `name`   | string | on success | Display name extracted from EXE version info  |
-| `path`   | string | on success | Full path to the selected EXE                 |
+| Key      | Type   | Condition | Description          |
+|----------|--------|-----------|----------------------|
+| `status` | string | always    | `"ok"` or `"error"`  |
 
-**Response (user cancelled the dialog):**
-
-| Key      | Type   | Condition  | Description       |
-|----------|--------|------------|-------------------|
-| `status` | string | always     | `"cancelled"`     |
+If the editor is already open, the companion focuses the existing window instead of opening a second one.
 
 **Example request:**
 
 ```
 ValueSet {
-    ["action"]     = "add-exe",
+    ["action"]     = "open-editor",
     ["configPath"] = "C:\\Users\\user\\AppData\\Local\\LaunchPad\\config.json"
 }
 ```
 
-**Example success response:**
+**Example response:**
 
 ```
-ValueSet {
-    ["status"] = "ok",
-    ["name"]   = "Visual Studio Code",
-    ["path"]   = "C:\\Program Files\\Microsoft VS Code\\Code.exe"
-}
+ValueSet { ["status"] = "ok" }
 ```
 
-**Example cancelled response:**
+**Widget client:** `CompanionClient.OpenEditorAsync(string configPath)` returns `bool` (`true` on success).
+
+---
+
+### `config-updated`
+
+Companion notifies the widget that config has been saved from the editor.
+
+**Direction:** Companion → Widget (unsolicited push message)
+
+This is a bidirectional use of the `AppServiceConnection` — the companion initiates the message, not the widget.
+
+**Message:**
+
+| Key      | Type   | Description                          |
+|----------|--------|--------------------------------------|
+| `action` | string | `"config-updated"`                   |
+
+**Example message:**
 
 ```
-ValueSet { ["status"] = "cancelled" }
+ValueSet { ["action"] = "config-updated" }
 ```
 
-**Widget client:** `CompanionClient.AddExeAsync(string configPath)` returns a tuple `(bool Success, string? Name, string? Path)`. Returns `(false, null, null)` on cancellation or transport failure.
-
-**Side effects:** On success, the companion modifies the config file on disk. The widget should reload its config after a successful `add-exe` to reflect the new entry.
+The widget handles this by calling `LoadConfigAsync()` to refresh the grid with the updated configuration.
 
 ---
 
@@ -427,43 +433,35 @@ Widget UI                CompanionClient              Companion
    |<--------------------------|                          |
 ```
 
-### Add EXE Flow
+### Open Editor Flow
 
 ```
 Widget UI                CompanionClient              Companion
    |                           |                          |
-   | User clicks '+' button    |                          |
-   |  AddExeAsync(configPath)  |                          |
+   | User clicks gear button   |                          |
+   |  OpenEditorAsync(path)    |                          |
    |-------------------------->|                          |
    |                           | SendMessageAsync         |
-   |                           |  { action: "add-exe",    |
+   |                           |  { action: "open-editor",|
    |                           |    configPath: "..." }   |
    |                           |------------------------->|
-   |                           |                          | ExePicker.ShowPickerDialog()
-   |                           |                          | (Win32 OpenFileDialog on STA thread)
-   |                           |                          |
-   |                           |                          | User selects file (or cancels)
-   |                           |                          |
-   |                           |                   If cancelled:
-   |                           | { status: "cancelled" }  |
+   |                           |                          | Opens WPF ConfigEditorWindow
+   |                           |                          | (or focuses existing window)
+   |                           |  { status: "ok" }        |
    |                           |<-------------------------|
-   |       (false, null, null) |                          |
+   |           true            |                          |
    |<--------------------------|                          |
    |                           |                          |
-   |                           |                   If selected:
-   |                           |                          | GetDisplayName(exePath)
-   |                           |                          | ConfigLoader.Load(configPath)
-   |                           |                          | AppendToConfig(config, exePath, name)
-   |                           |                          | ConfigLoader.Save(configPath, config)
+   |                           |       (user edits config in editor)
    |                           |                          |
-   |                           | { status: "ok",          |
-   |                           |   name: "...",           |
-   |                           |   path: "..." }          |
-   |                           |<-------------------------|
-   |       (true, name, path)  |                          |
-   |<--------------------------|                          |
+   |                           |       User clicks "Save & Refresh"
+   |                           |                          | ConfigLoader.Save(path, config)
    |                           |                          |
-   | Reload config to refresh  |                          |
+   |   { action: "config-updated" }                       |
+   |<-----------------------------------------------------|
+   |                           |                          |
+   | LoadConfigAsync()         |                          |
+   | (refresh grid)            |                          |
 ```
 
 ## File Paths

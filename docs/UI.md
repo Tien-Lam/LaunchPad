@@ -49,7 +49,7 @@ Page (Background=#25282C, RequestedTheme=Dark)
     GridView "ItemsGrid"         -- main tile grid, Visibility=Visible
       ItemsWrapGrid              -- 4-column horizontal wrap
       DataTemplate               -- per-tile template (LaunchItem)
-    Button "AddButton"           -- circular "+" button, bottom-right
+    Button "EditButton"          -- circular gear button, bottom-right
     StackPanel "EmptyState"      -- centered message, Visibility=Collapsed
       TextBlock "EmptyStateTitle"
       TextBlock "EmptyStateMessage"
@@ -114,27 +114,26 @@ This provides non-intrusive confirmation without animation storyboards.
 
 ---
 
-## Add Button
+## Edit Button
 
-A circular floating action button for adding new EXE entries:
+A circular floating action button for opening the config editor:
 
-| Property            | Value                            |
-|---------------------|----------------------------------|
-| Content             | `"+"`                            |
-| FontSize            | 20                               |
-| FontWeight          | Bold                             |
-| Width / Height      | 40 x 40                          |
-| CornerRadius        | 20 (fully circular)              |
-| HorizontalAlignment | Right                            |
-| VerticalAlignment   | Bottom                           |
-| Margin              | `0,0,8,8` (8px from right/bottom)|
-| ToolTip             | "Add application"                |
+| Property            | Value                                       |
+|---------------------|---------------------------------------------|
+| Content             | Gear glyph (`\uE713`)                       |
+| FontFamily          | Segoe MDL2 Assets                            |
+| FontSize            | 16                                           |
+| Width / Height      | 40 x 40                                      |
+| CornerRadius        | 20 (fully circular)                          |
+| HorizontalAlignment | Right                                        |
+| VerticalAlignment   | Bottom                                       |
+| Margin              | `0,0,8,8` (8px from right/bottom)            |
+| ToolTip             | "Edit configuration"                         |
 
-**Behavior** (`OnAddClick`):
-1. The button is disabled (`AddButton.IsEnabled = false`) to prevent double-clicks.
-2. Calls `CompanionClient.AddExeAsync(configPath)` which dispatches to the Win32 companion to open a file picker.
-3. On success, reloads the full config via `LoadConfigAsync()` to refresh the grid.
-4. The button is re-enabled in a `finally` block.
+**Behavior** (`OnEditClick`):
+1. The button is disabled (`EditButton.IsEnabled = false`) to prevent double-clicks during the IPC call.
+2. Sends the `open-editor` IPC action to the companion, which opens the WPF config editor window.
+3. The button is re-enabled in a `finally` block after the IPC call completes.
 
 ---
 

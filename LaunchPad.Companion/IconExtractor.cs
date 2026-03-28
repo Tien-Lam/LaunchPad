@@ -2,10 +2,13 @@ using System;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
+using System.Linq;
 using System.Net.Http;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml.Linq;
+using Windows.Management.Deployment;
 
 namespace LaunchPad.Companion;
 
@@ -116,6 +119,49 @@ public static class IconExtractor
                 bitmap.Save(ms, ImageFormat.Png);
                 return (true, ms.ToArray());
             }
+        }
+        catch
+        {
+            return (false, null);
+        }
+    }
+
+    public static (bool Success, byte[]? Data) ExtractStoreAppIcon(string aumid)
+    {
+        try
+        {
+            var pfn = StoreAppEnumerator.GetPackageFamilyName(aumid);
+            if (pfn == null)
+                return (false, null);
+
+            var pm = new PackageManager();
+            var packages = pm.FindPackagesForUser("", pfn);
+            var package = packages.FirstOrDefault();
+            if (package == null)
+                return (false, null);
+
+            var installPath = package.InstalledLocation.Path;
+            var manifestPath = Path.Combine(installPath, "AppxManifest.xml");
+            if (!File.Exists(manifestPath))
+                return (false, null);
+
+            var doc = XDocument.Load(manifestPath);
+            var ns = doc.Root?.GetDefaultNamespace() ?? XNamespace.None;
+            var uapNs = doc.Root?.GetNamespaceOfPrefix("uap")
+                ?? XNamespace.Get("http://schemas.microsoft.com/appx/manifest/uap/windows10");
+
+            var visualElements = doc.Descendants(uapNs + "VisualElements").FirstOrDefault();
+            var logoRelative = visualElements?.Attribute("Square44x44Logo")?.Value
+                ?? doc.Descendants(ns + "Logo").FirstOrDefault()?.Value;
+
+            if (string.IsNullOrEmpty(logoRelative))
+                return (false, null);
+
+            var iconPath = StoreAppEnumerator.ResolveLogoPath(installPath, logoRelative);
+            if (iconPath == null || !File.Exists(iconPath))
+                return (false, null);
+
+            return (true, File.ReadAllBytes(iconPath));
         }
         catch
         {

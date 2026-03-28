@@ -17,6 +17,7 @@ sealed partial class App : Application
     private BackgroundTaskDeferral? _appServiceDeferral;
 
     public static AppServiceConnection? CompanionConnection { get; private set; }
+    public static XboxGameBarWidget? Widget { get; private set; }
 
     public App()
     {
@@ -47,6 +48,7 @@ sealed partial class App : Application
                         widgetArgs,
                         Window.Current.CoreWindow,
                         rootFrame);
+                    Widget = _widget;
 
                     rootFrame.Navigate(typeof(LaunchPadWidget));
                     Window.Current.Activate();
@@ -95,6 +97,7 @@ sealed partial class App : Application
     {
         var deferral = e.SuspendingOperation.GetDeferral();
         _widget = null;
+        Widget = null;
         CompanionConnection = null;
         deferral.Complete();
     }

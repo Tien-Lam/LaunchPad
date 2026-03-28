@@ -13,6 +13,7 @@ using Windows.UI.Xaml.Media.Imaging;
 using LaunchPad.Shared;
 using LaunchPad.Widget.Models;
 using LaunchPad.Widget.Services;
+using Microsoft.Gaming.XboxGameBar;
 
 namespace LaunchPad.Widget;
 
@@ -53,6 +54,27 @@ public sealed partial class LaunchPadWidget : Page
                     await LoadConfigAsync();
                 });
             };
+        }
+
+        // Honor Game Bar opacity setting for compact/pinned mode
+        var widget = App.Widget;
+        if (widget != null)
+        {
+            try
+            {
+                this.Opacity = widget.RequestedOpacity / 100.0;
+                widget.RequestedOpacityChanged += (opacitySender, args) =>
+                {
+                    _ = Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, () =>
+                    {
+                        this.Opacity = opacitySender.RequestedOpacity / 100.0;
+                    });
+                };
+            }
+            catch
+            {
+                // RequestedOpacity may not be available in all Game Bar versions
+            }
         }
     }
 

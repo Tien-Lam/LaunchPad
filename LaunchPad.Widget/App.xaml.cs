@@ -1,4 +1,5 @@
 using System;
+using System.Threading.Tasks;
 using Windows.ApplicationModel;
 using Windows.ApplicationModel.Activation;
 using Windows.ApplicationModel.AppService;
@@ -65,13 +66,29 @@ sealed partial class App : Application
             CompanionConnection = _companionConnection;
 
             _companionConnection.RequestReceived += Services.CompanionClient.OnCompanionMessage;
+            _companionConnection.ServiceClosed += (_, _) =>
+            {
+                CompanionConnection = null;
+                TryRelaunchCompanion();
+            };
 
             args.TaskInstance.Canceled += (_, _) =>
             {
                 _appServiceDeferral?.Complete();
                 CompanionConnection = null;
+                TryRelaunchCompanion();
             };
         }
+    }
+
+    private async void TryRelaunchCompanion()
+    {
+        await Task.Delay(1000);
+        try
+        {
+            await FullTrustProcessLauncher.LaunchFullTrustProcessForCurrentAppAsync();
+        }
+        catch { }
     }
 
     private void OnSuspending(object sender, SuspendingEventArgs e)

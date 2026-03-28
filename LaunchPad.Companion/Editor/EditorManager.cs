@@ -39,6 +39,9 @@ public static class EditorManager
                     {
                         Source = new Uri("pack://application:,,,/PresentationFramework.Fluent;component/Themes/Fluent.xaml")
                     });
+#pragma warning disable WPF0001
+                    app.ThemeMode = ThemeMode.Dark;
+#pragma warning restore WPF0001
                 }
 
                 _editorWindow = new Editor.EditorWindow(configPath, onSaved);

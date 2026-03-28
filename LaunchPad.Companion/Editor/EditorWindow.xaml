@@ -4,13 +4,9 @@
         Title="LaunchPad — Config Editor"
         Width="500" Height="450"
         MinWidth="400" MinHeight="350"
-        WindowStartupLocation="CenterScreen"
-        ThemeMode="Dark">
+        WindowStartupLocation="CenterScreen">
     <Window.Resources>
         <ResourceDictionary>
-            <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="pack://application:,,,/PresentationFramework.Fluent;component/Themes/Fluent.xaml" />
-            </ResourceDictionary.MergedDictionaries>
             <Style x:Key="FieldLabel" TargetType="TextBlock">
                 <Setter Property="FontSize" Value="11"/>
                 <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.GrayTextBrushKey}}"/>

@@ -31,7 +31,22 @@
                       SelectionMode="None"
                       IsItemClickEnabled="True"
                       ItemClick="OnItemClick"
-                      HorizontalAlignment="Center">
+                      HorizontalAlignment="Center"
+                      XYFocusKeyboardNavigation="Enabled"
+                      SingleSelectionFollowsFocus="True">
+                <GridView.ItemContainerStyle>
+                    <Style TargetType="GridViewItem">
+                        <Setter Property="IsTabStop" Value="True"/>
+                        <Setter Property="UseSystemFocusVisuals" Value="True"/>
+                        <Setter Property="FocusVisualPrimaryBrush" Value="White"/>
+                        <Setter Property="FocusVisualPrimaryThickness" Value="2"/>
+                        <Setter Property="FocusVisualMargin" Value="0"/>
+                        <Setter Property="Margin" Value="0"/>
+                        <Setter Property="Padding" Value="0"/>
+                        <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                        <Setter Property="VerticalContentAlignment" Value="Stretch"/>
+                    </Style>
+                </GridView.ItemContainerStyle>
                 <GridView.ItemsPanel>
                     <ItemsPanelTemplate>
                         <ItemsWrapGrid MaximumRowsOrColumns="4" Orientation="Horizontal"

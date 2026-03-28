@@ -100,6 +100,16 @@ public sealed partial class LaunchPadWidget : Page
         EmptyState.Visibility = Visibility.Collapsed;
 
         await LoadIconsAsync();
+
+        // Set initial focus to first tile for controller navigation
+        if (Items.Count > 0)
+        {
+            await Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Low, () =>
+            {
+                var firstContainer = ItemsGrid.ContainerFromIndex(0) as GridViewItem;
+                firstContainer?.Focus(FocusState.Programmatic);
+            });
+        }
     }
 
     private async Task LoadIconsAsync()

@@ -79,7 +79,7 @@ All communication uses `ValueSet` messages over `AppServiceConnection`. Every re
 
 ### Game Bar Integration
 - Widget registered as `microsoft.gameBarUIExtension` in Package.appxmanifest
-- Hardcoded dark theme (`#25282C` background, `RequestedTheme="Dark"`) -- no Game Bar opacity/theme event handling
+- Hardcoded dark theme (`#202020` background, `RequestedTheme="Dark"`) -- subscribes to Game Bar opacity events but not theme events
 - Deploy via VS (F5) -- `Add-AppxPackage` registration doesn't reliably register with Game Bar
 
 ## Config

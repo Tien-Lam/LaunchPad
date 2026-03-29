@@ -8,8 +8,7 @@ internal static class NativeMethods
     private static extern uint SendInput(uint nInputs, INPUT[] pInputs, int cbSize);
 
     private const int INPUT_KEYBOARD = 1;
-    private const ushort VK_LWIN = 0x5B;
-    private const ushort VK_G = 0x47;
+    private const ushort VK_ESCAPE = 0x1B;
     private const uint KEYEVENTF_KEYUP = 0x0002;
 
     [StructLayout(LayoutKind.Sequential)]
@@ -35,24 +34,17 @@ internal static class NativeMethods
         public nint dwExtraInfo;
     }
 
-    internal static void SendWinG()
+    internal static void DismissGameBar()
     {
-        var inputs = new INPUT[4];
+        var inputs = new INPUT[2];
 
         inputs[0].type = INPUT_KEYBOARD;
-        inputs[0].u.ki.wVk = VK_LWIN;
+        inputs[0].u.ki.wVk = VK_ESCAPE;
 
         inputs[1].type = INPUT_KEYBOARD;
-        inputs[1].u.ki.wVk = VK_G;
+        inputs[1].u.ki.wVk = VK_ESCAPE;
+        inputs[1].u.ki.dwFlags = KEYEVENTF_KEYUP;
 
-        inputs[2].type = INPUT_KEYBOARD;
-        inputs[2].u.ki.wVk = VK_G;
-        inputs[2].u.ki.dwFlags = KEYEVENTF_KEYUP;
-
-        inputs[3].type = INPUT_KEYBOARD;
-        inputs[3].u.ki.wVk = VK_LWIN;
-        inputs[3].u.ki.dwFlags = KEYEVENTF_KEYUP;
-
-        SendInput(4, inputs, Marshal.SizeOf<INPUT>());
+        SendInput(2, inputs, Marshal.SizeOf<INPUT>());
     }
 }

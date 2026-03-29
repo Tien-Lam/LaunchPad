@@ -186,7 +186,7 @@ class Program
 
     private static ValueSet HandleDismissOverlay()
     {
-        Task.Delay(200).ContinueWith(_ => NativeMethods.SendWinG());
+        Task.Delay(200).ContinueWith(_ => NativeMethods.DismissGameBar());
         return new ValueSet { ["status"] = "ok" };
     }
 

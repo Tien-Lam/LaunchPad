@@ -1,50 +1,32 @@
+using System.Diagnostics;
 using System.Runtime.InteropServices;
+using System.Threading.Tasks;
 
 namespace LaunchPad.Companion;
 
 internal static class NativeMethods
 {
-    [DllImport("user32.dll", SetLastError = true)]
-    private static extern uint SendInput(uint nInputs, INPUT[] pInputs, int cbSize);
+    [DllImport("user32.dll")]
+    private static extern bool SetForegroundWindow(nint hWnd);
 
-    private const int INPUT_KEYBOARD = 1;
-    private const ushort VK_ESCAPE = 0x1B;
-    private const uint KEYEVENTF_KEYUP = 0x0002;
+    [DllImport("user32.dll")]
+    private static extern bool ShowWindow(nint hWnd, int nCmdShow);
 
-    [StructLayout(LayoutKind.Sequential)]
-    private struct INPUT
+    private const int SW_RESTORE = 9;
+
+    internal static async Task FocusProcessAsync(Process process)
     {
-        public int type;
-        public INPUTUNION u;
-    }
-
-    [StructLayout(LayoutKind.Explicit)]
-    private struct INPUTUNION
-    {
-        [FieldOffset(0)] public KEYBDINPUT ki;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    private struct KEYBDINPUT
-    {
-        public ushort wVk;
-        public ushort wScan;
-        public uint dwFlags;
-        public uint time;
-        public nint dwExtraInfo;
-    }
-
-    internal static void DismissGameBar()
-    {
-        var inputs = new INPUT[2];
-
-        inputs[0].type = INPUT_KEYBOARD;
-        inputs[0].u.ki.wVk = VK_ESCAPE;
-
-        inputs[1].type = INPUT_KEYBOARD;
-        inputs[1].u.ki.wVk = VK_ESCAPE;
-        inputs[1].u.ki.dwFlags = KEYEVENTF_KEYUP;
-
-        SendInput(2, inputs, Marshal.SizeOf<INPUT>());
+        // Wait for the process to create its main window
+        for (int i = 0; i < 20; i++)
+        {
+            await Task.Delay(100);
+            process.Refresh();
+            if (process.MainWindowHandle != nint.Zero)
+            {
+                ShowWindow(process.MainWindowHandle, SW_RESTORE);
+                SetForegroundWindow(process.MainWindowHandle);
+                return;
+            }
+        }
     }
 }

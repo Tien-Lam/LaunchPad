@@ -140,15 +140,6 @@ public static class CompanionClient
         return null;
     }
 
-    public static async Task DismissOverlayAsync()
-    {
-        var connection = App.CompanionConnection;
-        if (connection == null) return;
-
-        var request = new ValueSet { ["action"] = "dismiss-overlay" };
-        await connection.SendMessageAsync(request);
-    }
-
     public static async Task<bool> OpenEditorAsync()
     {
         var connection = App.CompanionConnection;

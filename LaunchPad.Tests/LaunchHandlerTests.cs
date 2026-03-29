@@ -52,7 +52,7 @@ public class LaunchHandlerTests
     [Fact]
     public void Launch_InvalidPath_ReturnsFailureWithError()
     {
-        var (success, error) = LaunchHandler.Launch("exe", @"C:\nonexistent\fake_app_12345.exe", null);
+        var (success, error, _) = LaunchHandler.Launch("exe", @"C:\nonexistent\fake_app_12345.exe", null);
 
         Assert.False(success);
         Assert.NotNull(error);

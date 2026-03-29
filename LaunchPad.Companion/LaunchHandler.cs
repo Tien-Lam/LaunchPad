@@ -24,17 +24,17 @@ public static class LaunchHandler
         };
     }
 
-    public static (bool Success, string? Error) Launch(string type, string path, string? args)
+    public static (bool Success, string? Error, Process? Process) Launch(string type, string path, string? args)
     {
         try
         {
             var startInfo = BuildProcessStartInfo(type, path, args);
-            Process.Start(startInfo);
-            return (true, null);
+            var process = Process.Start(startInfo);
+            return (true, null, process);
         }
         catch (Exception ex)
         {
-            return (false, ex.Message);
+            return (false, ex.Message, null);
         }
     }
 }

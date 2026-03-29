@@ -78,9 +78,6 @@ class Program
                 case "extract-store-icon":
                     response = HandleExtractStoreIcon(message);
                     break;
-                case "dismiss-overlay":
-                    response = HandleDismissOverlay();
-                    break;
                 default:
                     response = new ValueSet { ["status"] = "error", ["error"] = $"Unknown action: {action}" };
                     break;
@@ -105,7 +102,10 @@ class Program
         var path = message["path"] as string ?? "";
         var args = message.ContainsKey("args") ? message["args"] as string : null;
 
-        var (success, error) = LaunchHandler.Launch(type, path, args);
+        var (success, error, process) = LaunchHandler.Launch(type, path, args);
+
+        if (success && process != null)
+            _ = NativeMethods.FocusProcessAsync(process);
 
         var response = new ValueSet { ["status"] = success ? "ok" : "error" };
         if (error != null) response["error"] = error;
@@ -182,12 +182,6 @@ class Program
         if (success && data != null)
             response["iconData"] = Convert.ToBase64String(data);
         return response;
-    }
-
-    private static ValueSet HandleDismissOverlay()
-    {
-        Task.Delay(200).ContinueWith(_ => NativeMethods.DismissGameBar());
-        return new ValueSet { ["status"] = "ok" };
     }
 
     private static ValueSet HandleOpenEditor(ValueSet message)

@@ -231,14 +231,6 @@ public sealed partial class LaunchPadWidget : Page
         {
             var success = await CompanionClient.LaunchAsync(item.Type, item.Path, item.Args);
 
-            // Dismiss Game Bar overlay after successful launch (not when pinned)
-            if (success)
-            {
-                var widget = App.Widget;
-                if (widget != null && !widget.Pinned)
-                    await CompanionClient.DismissOverlayAsync();
-            }
-
             if (sender is GridView gridView)
             {
                 var container = gridView.ContainerFromItem(item) as GridViewItem;

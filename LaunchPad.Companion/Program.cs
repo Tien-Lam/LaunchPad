@@ -30,13 +30,18 @@ class Program
         }
 
         Log("Main: start");
-        using var mutex = new Mutex(true, "Local\\LaunchPadCompanion", out bool created);
-        if (!created)
+
+        // Acquire mutex with timeout — if previous instance is a zombie with a dead
+        // connection, don't wait forever. Proceed anyway and let App Service sort it out.
+        using var mutex = new Mutex(false, "Local\\LaunchPadCompanion");
+        if (!mutex.WaitOne(5000))
         {
-            Log("Main: mutex already held, exiting");
-            return;
+            Log("Main: mutex not acquired after 5s, proceeding anyway");
         }
-        Log("Main: mutex acquired");
+        else
+        {
+            Log("Main: mutex acquired");
+        }
 
         _connection = new AppServiceConnection
         {

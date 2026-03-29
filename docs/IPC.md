@@ -90,7 +90,9 @@ No exceptions are thrown to callers. All methods return result tuples or nullabl
 
 ### `launch`
 
-Launches an application (EXE, URL, or Store app) via `Process.Start` with `UseShellExecute = true`.
+Launches an application via `Process.Start` with `UseShellExecute = true`. For EXE launches, the companion also calls `SetForegroundWindow` on the launched process to bring it to the foreground.
+
+**Note:** URL and Store items are now launched directly from the widget via `XboxGameBarWidget.LaunchUriAsync`, which handles overlay dismissal and focus automatically. The `launch` IPC action is only used for EXE items or as a fallback when `LaunchUriAsync` is unavailable.
 
 **Request:**
 

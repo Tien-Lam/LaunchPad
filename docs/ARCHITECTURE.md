@@ -86,7 +86,7 @@ All communication uses `ValueSet` messages over `AppServiceConnection`. Every re
 
 Location: `%LOCALAPPDATA%\LaunchPad\config.json`
 
-Three item types: `exe` (local executables), `url` (web URLs), `store` (protocol URIs like `spotify:`). See `config.sample.json` for format.
+Three item types: `exe` (local executables), `url` (web URLs), `store` (UWP/Store apps via `shell:AppsFolder\{AUMID}`). See `config.sample.json` for format.
 
 ## See Also
 

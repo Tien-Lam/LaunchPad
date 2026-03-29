@@ -118,15 +118,15 @@ The `path` field is a full URL (including scheme). Launched via the system's def
 }
 ```
 
-### `store` -- Launch a Microsoft Store / UWP App via Protocol
+### `store` -- Launch a Microsoft Store / UWP App
 
-The `path` field is a URI protocol scheme registered by the target app. Windows resolves this to the installed Store app.
+The `path` field is a `shell:AppsFolder\` URI containing the app's AUMID (Application User Model ID). The editor's "Add Store" button provides a picker that fills this automatically.
 
 ```json
 {
   "name": "Spotify",
   "type": "store",
-  "path": "spotify:",
+  "path": "shell:AppsFolder\\SpotifyAB.SpotifyMusic_zpdnekdrzrea0!Spotify",
   "args": null,
   "icon": null
 }
@@ -136,7 +136,7 @@ The `path` field is a URI protocol scheme registered by the target app. Windows 
 {
   "name": "Xbox",
   "type": "store",
-  "path": "xbox:",
+  "path": "shell:AppsFolder\\Microsoft.GamingApp_8wekyb3d8bbwe!Microsoft.Xbox.App",
   "args": null,
   "icon": null
 }
@@ -181,7 +181,7 @@ For example, `C:\Windows\notepad.exe` produces a cache file like `a1b2c3d4e5f678
 **Cache invalidation:**
 
 - **EXE icons**: The cache is invalidated when the EXE's last-write timestamp is newer than the cached PNG's last-write timestamp. This means updating or reinstalling an application causes re-extraction on next load.
-- **Favicons**: No time-based invalidation. Once fetched, the cached favicon is used indefinitely. Delete the cache file manually to force a re-fetch.
+- **Favicons**: Cached favicons expire after 7 days. On the next load after expiry, the favicon is re-fetched from Google's favicon service. If the re-fetch fails, the stale cache is not used — the item falls back to the default globe icon.
 
 The cache directory is created automatically on first use by `IconExtractor.GetIconCacheDir()`.
 
@@ -315,14 +315,14 @@ Note: `ConfigLoader.Load` uses `PropertyNameCaseInsensitive = true`, so field na
     {
       "name": "Spotify",
       "type": "store",
-      "path": "spotify:",
+      "path": "shell:AppsFolder\\SpotifyAB.SpotifyMusic_zpdnekdrzrea0!Spotify",
       "args": null,
       "icon": null
     },
     {
       "name": "Xbox",
       "type": "store",
-      "path": "xbox:",
+      "path": "shell:AppsFolder\\Microsoft.GamingApp_8wekyb3d8bbwe!Microsoft.Xbox.App",
       "args": null,
       "icon": null
     }

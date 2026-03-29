@@ -21,7 +21,17 @@ public partial class EditorWindow : Window
         InitializeComponent();
         _configPath = configPath;
         _onSaved = onSaved;
+        PreviewMouseDown += OnWindowPreviewMouseDown;
         LoadItems();
+    }
+
+    private void OnWindowPreviewMouseDown(object sender, MouseButtonEventArgs e)
+    {
+        if (AddMenu.Visibility == Visibility.Visible &&
+            !AddMenu.IsMouseOver && !AddButton.IsMouseOver)
+        {
+            DismissAddMenu();
+        }
     }
 
     private void LoadItems()
@@ -140,12 +150,19 @@ public partial class EditorWindow : Window
 
     private void OnAddButtonClick(object sender, RoutedEventArgs e)
     {
-        AddPopup.IsOpen = !AddPopup.IsOpen;
+        AddMenu.Visibility = AddMenu.Visibility == Visibility.Visible
+            ? Visibility.Collapsed
+            : Visibility.Visible;
+    }
+
+    private void DismissAddMenu()
+    {
+        AddMenu.Visibility = Visibility.Collapsed;
     }
 
     private void OnAddExeClick(object sender, RoutedEventArgs e)
     {
-        AddPopup.IsOpen = false;
+        DismissAddMenu();
         var exePath = ExePicker.ShowPickerDialog();
         if (exePath == null) return;
 
@@ -157,7 +174,7 @@ public partial class EditorWindow : Window
 
     private void OnAddUrlClick(object sender, RoutedEventArgs e)
     {
-        AddPopup.IsOpen = false;
+        DismissAddMenu();
         SyncFormToItem();
         _model.AddUrl();
         RefreshList(_model.SelectedIndex);
@@ -165,7 +182,7 @@ public partial class EditorWindow : Window
 
     private void OnAddStoreClick(object sender, RoutedEventArgs e)
     {
-        AddPopup.IsOpen = false;
+        DismissAddMenu();
         var picker = new StoreAppPickerWindow { Owner = this };
         if (picker.ShowDialog() == true && picker.SelectedApp != null)
         {

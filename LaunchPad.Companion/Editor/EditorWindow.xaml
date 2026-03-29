@@ -43,29 +43,9 @@
                 BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
                 BorderThickness="0,0,0,1">
             <StackPanel Orientation="Horizontal">
-                <StackPanel Orientation="Horizontal">
-                    <Button x:Name="AddButton" Content="+ Add ▾"
-                            Style="{DynamicResource AccentButtonStyle}"
-                            Click="OnAddButtonClick" Margin="0,0,4,0"/>
-                    <Popup x:Name="AddPopup" StaysOpen="False"
-                           Placement="Bottom" PlacementTarget="{Binding ElementName=AddButton}">
-                        <Border Background="{DynamicResource {x:Static SystemColors.MenuBrushKey}}"
-                                BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
-                                BorderThickness="1" CornerRadius="4" Padding="2">
-                            <StackPanel>
-                                <Button Content="EXE Application" Click="OnAddExeClick"
-                                        HorizontalContentAlignment="Left" Padding="12,6"
-                                        BorderThickness="0" Background="Transparent"/>
-                                <Button Content="URL" Click="OnAddUrlClick"
-                                        HorizontalContentAlignment="Left" Padding="12,6"
-                                        BorderThickness="0" Background="Transparent"/>
-                                <Button Content="Store App" Click="OnAddStoreClick"
-                                        HorizontalContentAlignment="Left" Padding="12,6"
-                                        BorderThickness="0" Background="Transparent"/>
-                            </StackPanel>
-                        </Border>
-                    </Popup>
-                </StackPanel>
+                <Button x:Name="AddButton" Content="+ Add ▾"
+                        Style="{DynamicResource AccentButtonStyle}"
+                        Click="OnAddButtonClick" Margin="0,0,4,0"/>
                 <Separator Margin="4,0"/>
                 <Button x:Name="MoveUpButton" Content="&#x25B2;"
                         Click="OnMoveUpClick" Margin="4,0,2,0" Padding="8,4"/>
@@ -84,6 +64,28 @@
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
+
+            <!-- Add menu dropdown (overlays content when visible) -->
+            <Border x:Name="AddMenu" Visibility="Collapsed"
+                    Grid.ColumnSpan="3"
+                    VerticalAlignment="Top" HorizontalAlignment="Left"
+                    Margin="8,0,0,0" Panel.ZIndex="10"
+                    CornerRadius="4" Padding="2"
+                    Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+                    BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+                    BorderThickness="1">
+                <StackPanel>
+                    <Button Content="EXE Application" Click="OnAddExeClick"
+                            HorizontalContentAlignment="Left" Padding="12,6"
+                            BorderThickness="0" Background="Transparent"/>
+                    <Button Content="URL" Click="OnAddUrlClick"
+                            HorizontalContentAlignment="Left" Padding="12,6"
+                            BorderThickness="0" Background="Transparent"/>
+                    <Button Content="Store App" Click="OnAddStoreClick"
+                            HorizontalContentAlignment="Left" Padding="12,6"
+                            BorderThickness="0" Background="Transparent"/>
+                </StackPanel>
+            </Border>
 
             <!-- Left: Item list -->
             <ListBox x:Name="ItemList" Grid.Column="0"

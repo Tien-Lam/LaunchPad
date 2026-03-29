@@ -120,6 +120,26 @@ public static class CompanionClient
         return null;
     }
 
+    public static async Task<byte[]?> ExtractStoreIconAsync(string aumid)
+    {
+        var connection = App.CompanionConnection;
+        if (connection == null) return null;
+
+        var request = new ValueSet
+        {
+            ["action"] = "extract-store-icon",
+            ["aumid"] = aumid
+        };
+
+        var response = await connection.SendMessageAsync(request);
+        if (response.Status != AppServiceResponseStatus.Success) return null;
+
+        if (response.Message["status"] as string == "ok" && response.Message.ContainsKey("iconData"))
+            return Convert.FromBase64String(response.Message["iconData"] as string);
+
+        return null;
+    }
+
     public static async Task<bool> OpenEditorAsync()
     {
         var connection = App.CompanionConnection;

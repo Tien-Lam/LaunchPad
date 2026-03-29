@@ -158,6 +158,12 @@ public sealed partial class LaunchPadWidget : Page
                 {
                     iconData = await CompanionClient.FetchFaviconAsync(item.Path);
                 }
+                else if (item.Type == "store")
+                {
+                    var aumid = ExtractAumidFromPath(item.Path);
+                    if (aumid != null)
+                        iconData = await CompanionClient.ExtractStoreIconAsync(aumid);
+                }
             }
 
             if (iconData != null)
@@ -189,6 +195,14 @@ public sealed partial class LaunchPadWidget : Page
     {
         var alpha = (byte)(opacity * 255);
         this.Background = new SolidColorBrush(Windows.UI.Color.FromArgb(alpha, 0x20, 0x20, 0x20));
+    }
+
+    private static string? ExtractAumidFromPath(string path)
+    {
+        const string prefix = @"shell:AppsFolder\";
+        if (path.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+            return path[prefix.Length..];
+        return null;
     }
 
     private void SetDefaultIcon(LaunchItem item)

@@ -229,7 +229,28 @@ public sealed partial class LaunchPadWidget : Page
     {
         if (e.ClickedItem is LaunchItem item)
         {
-            var success = await CompanionClient.LaunchAsync(item.Type, item.Path, item.Args);
+            bool success;
+            var widget = App.Widget;
+
+            if (item.Type == "url" || item.Type == "store")
+            {
+                // Use Game Bar's built-in launcher — handles overlay dismiss + focus
+                try
+                {
+                    success = widget != null
+                        ? await widget.LaunchUriAsync(new Uri(item.Path))
+                        : await CompanionClient.LaunchAsync(item.Type, item.Path, item.Args);
+                }
+                catch
+                {
+                    success = await CompanionClient.LaunchAsync(item.Type, item.Path, item.Args);
+                }
+            }
+            else
+            {
+                // EXE needs companion for Process.Start (UWP sandbox)
+                success = await CompanionClient.LaunchAsync(item.Type, item.Path, item.Args);
+            }
 
             if (sender is GridView gridView)
             {

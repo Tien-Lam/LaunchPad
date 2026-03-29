@@ -139,9 +139,9 @@
             <!-- Dialog card -->
             <Border Background="#2D2D2D" CornerRadius="8"
                     BorderBrush="#15FFFFFF" BorderThickness="1"
-                    Width="450" Padding="24"
-                    VerticalAlignment="Center" HorizontalAlignment="Center"
-                    Margin="24">
+                    MaxWidth="450" Padding="24"
+                    VerticalAlignment="Center" HorizontalAlignment="Stretch"
+                    Margin="36,24">
                 <StackPanel>
                     <TextBlock Text="Edit Item" FontSize="18" FontWeight="SemiBold"
                                Foreground="White" Margin="0,0,0,16"/>

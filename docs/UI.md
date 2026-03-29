@@ -71,8 +71,10 @@ Page (Background=#202020, RequestedTheme=Dark)
 ### GridView (ItemsGrid)
 
 - Bound to `Items` via `{x:Bind Items}` (an `ObservableCollection<LaunchItem>` on the page).
-- `SelectionMode="None"` -- tiles are not selectable, only clickable.
+- `SelectionMode="Single"` with `SingleSelectionFollowsFocus="True"` -- the focused tile is also the selected tile, providing a clear visual indicator for keyboard/controller navigation.
 - `IsItemClickEnabled="True"` with handler `OnItemClick`.
+- `XYFocusKeyboardNavigation="Enabled"` for reliable arrow key and D-pad navigation.
+- `TabNavigation="Once"` -- Tab enters the grid, arrow keys navigate within it.
 
 ### ItemsWrapGrid (GridView.ItemsPanel)
 
@@ -89,6 +91,7 @@ Each tile is defined inside `GridView.ItemTemplate` as a `DataTemplate` with `x:
 ```
 Grid "TileRoot" (80x80, CornerRadius=8, Padding=4, Background=TileBackground)
   RenderTransform: CompositeTransform (RenderTransformOrigin=0.5,0.5)
+  Border "FocusBorder" (CornerRadius=8, TileFocusBorder, Opacity=0, keyboard/controller focus indicator)
   Border "FeedbackOverlay" (CornerRadius=8, Opacity=0, overlay for launch feedback)
   StackPanel (centered, Spacing=4)
     Image (36x36, Stretch=Uniform, Source bound to IconSource)
@@ -141,13 +144,15 @@ After the launch completes, the `FeedbackOverlay` border flashes:
 
 Note: In overlay mode, the feedback animation may not be visible since `LaunchUriAsync` dismisses Game Bar immediately.
 
-### Controller Focus
+### Controller / Keyboard Focus
 
-Tiles are focusable for gamepad/keyboard navigation:
+Tiles are focusable for gamepad and keyboard navigation:
 
-- `GridView` has `XYFocusKeyboardNavigation="Enabled"` for D-pad navigation.
-- System focus visuals are used (no custom focus styling).
-- On first load, focus is set to the first tile so controller users have an immediate starting point.
+- `GridView` uses `SelectionMode="Single"` with `SingleSelectionFollowsFocus="True"` — the focused tile is always the selected tile.
+- Custom focus visual: a `FocusBorder` element inside each tile (2px `TileFocusBorder` border, `#60FFFFFF`) shows/hides via `GotFocus`/`LostFocus` handlers. System focus visuals are disabled.
+- Focused tiles also get the hover background color for additional visual emphasis.
+- On first load, `SelectedIndex` is set to 0 and the first tile receives keyboard focus.
+- All tile colors are read from XAML resources via `GetResourceColor()` — no hardcoded values in code-behind.
 
 ---
 

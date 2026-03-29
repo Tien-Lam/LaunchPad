@@ -34,13 +34,15 @@ public sealed partial class LaunchPadWidget : Page
         try
         {
             await FullTrustProcessLauncher.LaunchFullTrustProcessForCurrentAppAsync();
-            // Give companion time to connect
-            await Task.Delay(500);
         }
         catch (Exception)
         {
             // Companion may already be running
         }
+
+        // Wait for companion to connect (up to 5 seconds)
+        for (int i = 0; i < 50 && App.CompanionConnection == null; i++)
+            await Task.Delay(100);
 
         await LoadConfigAsync();
 

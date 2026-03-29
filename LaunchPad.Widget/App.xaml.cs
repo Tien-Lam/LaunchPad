@@ -88,9 +88,13 @@ sealed partial class App : Application
             args.TaskInstance.Canceled += (_, _) =>
             {
                 WidgetLog.Write("BackgroundTask Canceled fired");
-                _appServiceDeferral?.Complete();
+                // Dispose the connection to trigger ServiceClosed on the companion side,
+                // so it releases the mutex and exits instead of becoming a zombie
+                try { _companionConnection?.Dispose(); }
+                catch { }
+                _companionConnection = null;
                 CompanionConnection = null;
-                TryRelaunchCompanion();
+                _appServiceDeferral?.Complete();
             };
         }
     }

@@ -201,7 +201,7 @@ public sealed partial class LaunchPadWidget : Page
     {
         const string prefix = @"shell:AppsFolder\";
         if (path.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
-            return path[prefix.Length..];
+            return path.Substring(prefix.Length);
         return null;
     }
 

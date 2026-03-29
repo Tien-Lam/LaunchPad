@@ -67,6 +67,12 @@ public partial class EditorWindow : Window
             var (success, path) = IconExtractor.ExtractFromExe(item.Path, cacheDir);
             if (success) return path;
         }
+        else if (item.Type == LaunchItemType.Url)
+        {
+            var task = IconExtractor.FetchFaviconAsync(item.Path, cacheDir);
+            var (success, path) = task.GetAwaiter().GetResult();
+            if (success) return path;
+        }
         else if (item.Type == LaunchItemType.Store)
         {
             var aumid = ExtractAumidFromPath(item.Path);

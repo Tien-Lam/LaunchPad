@@ -78,11 +78,15 @@ public partial class EditorWindow : Window
             var aumid = ExtractAumidFromPath(item.Path);
             if (aumid != null)
             {
+                var cachePath = Path.Combine(cacheDir, IconExtractor.GetCacheFileName(aumid));
+                if (File.Exists(cachePath))
+                    return cachePath;
+
                 var (success, data) = IconExtractor.ExtractStoreAppIcon(aumid);
                 if (success && data != null)
                 {
-                    var cachePath = Path.Combine(cacheDir, IconExtractor.GetCacheFileName(aumid));
-                    File.WriteAllBytes(cachePath, data);
+                    try { File.WriteAllBytes(cachePath, data); }
+                    catch (IOException) { }
                     return cachePath;
                 }
             }

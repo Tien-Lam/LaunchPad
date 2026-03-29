@@ -4,8 +4,7 @@
         Title="Select Store App"
         Width="400" Height="500"
         MinWidth="300" MinHeight="300"
-        WindowStartupLocation="CenterOwner"
-        ThemeMode="Dark">
+        WindowStartupLocation="CenterOwner">
     <Window.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>

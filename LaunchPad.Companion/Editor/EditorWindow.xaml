@@ -4,8 +4,7 @@
         Title="LaunchPad — Config Editor"
         Width="500" Height="450"
         MinWidth="400" MinHeight="350"
-        WindowStartupLocation="CenterScreen"
-        ThemeMode="Dark">
+        WindowStartupLocation="CenterScreen">
     <Window.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>

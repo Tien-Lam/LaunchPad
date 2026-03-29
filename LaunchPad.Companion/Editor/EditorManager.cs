@@ -32,8 +32,15 @@ public static class EditorManager
             _editorThread = new Thread(() =>
             {
                 // WPF Application is needed for theme resource resolution
+                // ThemeMode must be set on Application (not Window) to avoid
+                // crashes when popup-based controls dismiss on a separate STA thread
                 if (Application.Current == null)
-                    new Application { ShutdownMode = ShutdownMode.OnExplicitShutdown };
+                {
+                    var app = new Application { ShutdownMode = ShutdownMode.OnExplicitShutdown };
+#pragma warning disable WPF0001
+                    app.ThemeMode = ThemeMode.Dark;
+#pragma warning restore WPF0001
+                }
 
                 _editorWindow = new Editor.EditorWindow(configPath, onSaved);
                 _editorWindow.Closed += (_, _) =>

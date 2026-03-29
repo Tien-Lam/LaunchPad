@@ -15,6 +15,7 @@ public partial class EditorWindow : Window
     private readonly EditorModel _model = new();
     private int _previousIndex = -1;
     private Point _dragStartPoint;
+    private int _dragSourceIndex = -1;
 
     public EditorWindow(string configPath, Action? onSaved)
     {
@@ -201,11 +202,25 @@ public partial class EditorWindow : Window
     private void OnListPreviewMouseDown(object sender, MouseButtonEventArgs e)
     {
         _dragStartPoint = e.GetPosition(null);
+        // Only allow drag if mouse-down is on an actual list item
+        var listBox = (System.Windows.Controls.ListBox)sender;
+        var element = e.OriginalSource as DependencyObject;
+        _dragSourceIndex = -1;
+        while (element != null && element != listBox)
+        {
+            if (element is ListBoxItem)
+            {
+                _dragSourceIndex = listBox.SelectedIndex;
+                break;
+            }
+            element = System.Windows.Media.VisualTreeHelper.GetParent(element);
+        }
     }
 
     private void OnListPreviewMouseMove(object sender, System.Windows.Input.MouseEventArgs e)
     {
         if (e.LeftButton != MouseButtonState.Pressed) return;
+        if (_dragSourceIndex < 0) return;
 
         var pos = e.GetPosition(null);
         var diff = _dragStartPoint - pos;
@@ -215,11 +230,9 @@ public partial class EditorWindow : Window
             return;
 
         var listBox = (System.Windows.Controls.ListBox)sender;
-        var sourceIndex = listBox.SelectedIndex;
-        if (sourceIndex < 0) return;
-
         SyncFormToItem();
-        DragDrop.DoDragDrop(listBox, sourceIndex, System.Windows.DragDropEffects.Move);
+        DragDrop.DoDragDrop(listBox, _dragSourceIndex, System.Windows.DragDropEffects.Move);
+        _dragSourceIndex = -1;
     }
 
     private void OnListDragOver(object sender, System.Windows.DragEventArgs e)

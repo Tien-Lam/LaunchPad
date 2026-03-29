@@ -13,55 +13,65 @@
         </ResourceDictionary>
     </Window.Resources>
 
-    <DockPanel Margin="12">
-        <!-- Search box -->
-        <TextBox x:Name="SearchBox"
-                 DockPanel.Dock="Top"
-                 Margin="0,0,0,8"
-                 TextChanged="OnSearchTextChanged"/>
+    <Grid Background="#202020">
+        <DockPanel Margin="24,20">
+            <!-- Page header -->
+            <TextBlock Text="Select Store App" FontSize="20" FontWeight="SemiBold"
+                       Foreground="White" DockPanel.Dock="Top" Margin="0,0,0,12"/>
 
-        <!-- Bottom buttons -->
-        <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal"
-                    HorizontalAlignment="Right" Margin="0,8,0,0">
-            <Button Content="OK" Width="80" Margin="0,0,8,0"
-                    Style="{DynamicResource AccentButtonStyle}"
-                    Click="OnOkClick" x:Name="OkButton" IsEnabled="False"/>
-            <Button Content="Cancel" Width="80"
-                    Click="OnCancelClick"/>
-        </StackPanel>
+            <!-- Search box -->
+            <TextBox x:Name="SearchBox"
+                     DockPanel.Dock="Top"
+                     Margin="0,0,0,12"
+                     TextChanged="OnSearchTextChanged"/>
 
-        <!-- Loading indicator -->
-        <TextBlock x:Name="LoadingText" Text="Loading installed apps..."
-                   DockPanel.Dock="Top"
-                   HorizontalAlignment="Center"
-                   Margin="0,20,0,0"
-                   Opacity="0.5"/>
+            <!-- Bottom buttons -->
+            <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal"
+                        HorizontalAlignment="Right" Margin="0,12,0,0">
+                <Button Content="OK" Width="80" Margin="0,0,8,0"
+                        Style="{DynamicResource AccentButtonStyle}"
+                        Click="OnOkClick" x:Name="OkButton" IsEnabled="False"/>
+                <Button Content="Cancel" Width="80"
+                        Click="OnCancelClick"/>
+            </StackPanel>
 
-        <!-- App list -->
-        <ListBox x:Name="AppList"
-                 BorderThickness="0"
-                 SelectionChanged="OnSelectionChanged"
-                 MouseDoubleClick="OnListDoubleClick">
-            <ListBox.ItemTemplate>
-                <DataTemplate>
-                    <StackPanel Orientation="Horizontal" Margin="4,4">
-                        <Grid Width="32" Height="32" Margin="0,0,10,0">
-                            <Image Source="{Binding IconPath}" Width="32" Height="32"
-                                   Stretch="Uniform"
-                                   RenderOptions.BitmapScalingMode="HighQuality"/>
-                            <Border CornerRadius="4" Opacity="0.6"
-                                    Visibility="{Binding FallbackVisibility}"
-                                    Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
-                                <TextBlock Text="APP" FontSize="10" FontWeight="SemiBold"
-                                           HorizontalAlignment="Center"
-                                           VerticalAlignment="Center"/>
-                            </Border>
-                        </Grid>
-                        <TextBlock Text="{Binding Name}" FontSize="13"
-                                   VerticalAlignment="Center"/>
-                    </StackPanel>
-                </DataTemplate>
-            </ListBox.ItemTemplate>
-        </ListBox>
-    </DockPanel>
+            <!-- Loading indicator -->
+            <TextBlock x:Name="LoadingText" Text="Loading installed apps..."
+                       DockPanel.Dock="Top"
+                       HorizontalAlignment="Center"
+                       Margin="0,20,0,0"
+                       Foreground="#99FFFFFF"/>
+
+            <!-- App list -->
+            <ListBox x:Name="AppList"
+                     BorderThickness="0"
+                     Background="Transparent"
+                     SelectionChanged="OnSelectionChanged"
+                     MouseDoubleClick="OnListDoubleClick"
+                     Margin="0,4,0,0">
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <StackPanel Orientation="Horizontal" Margin="4,4">
+                            <Grid Width="32" Height="32" Margin="0,0,10,0">
+                                <Image Source="{Binding IconPath}" Width="32" Height="32"
+                                       Stretch="Uniform"
+                                       RenderOptions.BitmapScalingMode="HighQuality"/>
+                                <Border CornerRadius="4" Opacity="0.6"
+                                        Visibility="{Binding FallbackVisibility}"
+                                        Background="#20FFFFFF">
+                                    <TextBlock Text="APP" FontSize="10" FontWeight="SemiBold"
+                                               HorizontalAlignment="Center"
+                                               VerticalAlignment="Center"
+                                               Foreground="#99FFFFFF"/>
+                                </Border>
+                            </Grid>
+                            <TextBlock Text="{Binding Name}" FontSize="13"
+                                       Foreground="White"
+                                       VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+        </DockPanel>
+    </Grid>
 </Window>

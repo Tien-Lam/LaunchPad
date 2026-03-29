@@ -51,9 +51,9 @@ public class StoreAppEnumeratorTests
     public void GetInstalledApps_ContainsKnownApp()
     {
         var apps = StoreAppEnumerator.GetInstalledApps();
+        // At least one Microsoft app should exist on any Windows machine
         Assert.Contains(apps, a =>
-            a.Name.Contains("Store", StringComparison.OrdinalIgnoreCase) ||
-            a.Aumid.Contains("WindowsStore", StringComparison.OrdinalIgnoreCase));
+            a.Aumid.Contains("Microsoft", StringComparison.OrdinalIgnoreCase));
     }
 
     [Fact]

@@ -38,7 +38,9 @@ jobs:
       - name: Find MSIX
         id: find-msix
         run: |
-          $msix = Get-ChildItem -Recurse -Filter "*.msix" | Where-Object { $_.FullName -match "Release" } | Select-Object -First 1
+          $msix = Get-ChildItem -Path "LaunchPad.Package\AppPackages" -Recurse -Filter "*.msix" | Select-Object -First 1
+          if (-not $msix) { Write-Error "No MSIX found"; exit 1 }
+          Write-Host "Found: $($msix.FullName)"
           echo "MSIX_PATH=$($msix.FullName)" >> $env:GITHUB_ENV
           echo "MSIX_NAME=$($msix.Name)" >> $env:GITHUB_ENV
         shell: pwsh

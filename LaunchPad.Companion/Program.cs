@@ -34,9 +34,9 @@ class Program
         // Acquire mutex with timeout — if previous instance is a zombie with a dead
         // connection, don't wait forever. Proceed anyway and let App Service sort it out.
         using var mutex = new Mutex(false, "Local\\LaunchPadCompanion");
-        if (!mutex.WaitOne(2000))
+        if (!mutex.WaitOne(500))
         {
-            Log("Main: mutex not acquired after 2s, proceeding anyway");
+            Log("Main: mutex not acquired after 500ms, proceeding anyway");
         }
         else
         {

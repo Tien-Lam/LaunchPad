@@ -139,7 +139,7 @@
             <!-- Dialog card -->
             <Border Background="#2D2D2D" CornerRadius="8"
                     BorderBrush="#15FFFFFF" BorderThickness="1"
-                    MaxWidth="450" Padding="24"
+                    Width="450" Padding="24"
                     VerticalAlignment="Center" HorizontalAlignment="Center"
                     Margin="24">
                 <StackPanel>

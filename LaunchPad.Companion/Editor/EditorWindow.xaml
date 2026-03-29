@@ -1,8 +1,9 @@
 <Window x:Class="LaunchPad.Companion.Editor.EditorWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:editor="clr-namespace:LaunchPad.Companion.Editor"
         Title="LaunchPad — Config Editor"
-        Width="500" Height="450"
+        Width="520" Height="550"
         MinWidth="400" MinHeight="350"
         WindowStartupLocation="CenterScreen">
     <Window.Resources>
@@ -10,140 +11,180 @@
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="pack://application:,,,/PresentationFramework.Fluent;component/Themes/Fluent.xaml" />
             </ResourceDictionary.MergedDictionaries>
+
+            <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+
+            <Style x:Key="SettingsCard" TargetType="Border">
+                <Setter Property="Background" Value="#2D2D2D"/>
+                <Setter Property="CornerRadius" Value="4"/>
+                <Setter Property="BorderBrush" Value="#15FFFFFF"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="Padding" Value="12,10"/>
+                <Setter Property="Margin" Value="0,1"/>
+            </Style>
+
+            <Style x:Key="IconButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+                <Setter Property="FontFamily" Value="Segoe MDL2 Assets"/>
+                <Setter Property="FontSize" Value="14"/>
+                <Setter Property="Padding" Value="6"/>
+                <Setter Property="MinWidth" Value="32"/>
+                <Setter Property="MinHeight" Value="32"/>
+                <Setter Property="Background" Value="Transparent"/>
+                <Setter Property="BorderThickness" Value="0"/>
+            </Style>
+
             <Style x:Key="FieldLabel" TargetType="TextBlock">
                 <Setter Property="FontSize" Value="11"/>
-                <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.GrayTextBrushKey}}"/>
+                <Setter Property="Foreground" Value="#99FFFFFF"/>
                 <Setter Property="Margin" Value="0,0,0,4"/>
-            </Style>
-            <Style x:Key="DangerButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
-                <Setter Property="Background" Value="{DynamicResource SystemFillColorCriticalBackgroundBrush}"/>
             </Style>
         </ResourceDictionary>
     </Window.Resources>
 
-    <DockPanel>
-        <!-- Bottom bar -->
-        <Border DockPanel.Dock="Bottom" Padding="12,8"
-                BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
-                BorderThickness="0,1,0,0">
-            <DockPanel>
-                <TextBlock x:Name="ItemCountLabel" Text="0 items"
-                           FontSize="11" Opacity="0.5"
-                           VerticalAlignment="Center"/>
-                <Button x:Name="SaveButton" Content="Save and Refresh"
-                        Style="{DynamicResource AccentButtonStyle}"
-                        HorizontalAlignment="Right" DockPanel.Dock="Right"
-                        Click="OnSaveClick"/>
-            </DockPanel>
-        </Border>
+    <Grid Background="#202020">
+        <!-- Main scrollable content -->
+        <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="24,20">
+            <StackPanel MaxWidth="480">
+                <!-- Page header -->
+                <TextBlock Text="LaunchPad" FontSize="20" FontWeight="SemiBold"
+                           Foreground="White" Margin="0,0,0,2"/>
+                <TextBlock Text="Configure your launch items" FontSize="12"
+                           Foreground="#99FFFFFF" Margin="0,0,0,20"/>
 
-        <!-- Toolbar -->
-        <Border DockPanel.Dock="Top" Padding="8,6"
-                BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
-                BorderThickness="0,0,0,1">
-            <StackPanel Orientation="Horizontal">
-                <Menu VerticalAlignment="Center" Margin="0,0,4,0">
-                    <MenuItem Header="+ Add">
+                <!-- Section header -->
+                <TextBlock Text="Items" FontSize="14" FontWeight="SemiBold"
+                           Foreground="White" Margin="0,0,0,8"/>
+
+                <!-- Item cards -->
+                <ItemsControl ItemsSource="{Binding Items}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate DataType="{x:Type editor:ItemViewModel}">
+                            <Border Style="{StaticResource SettingsCard}">
+                                <DockPanel>
+                                    <!-- Action buttons (right) -->
+                                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal"
+                                                VerticalAlignment="Center" Margin="8,0,0,0">
+                                        <Button Content="&#xE70E;" Style="{StaticResource IconButton}"
+                                                ToolTip="Move up" Click="OnMoveUpClick"
+                                                Tag="{Binding}"/>
+                                        <Button Content="&#xE70D;" Style="{StaticResource IconButton}"
+                                                ToolTip="Move down" Click="OnMoveDownClick"
+                                                Tag="{Binding}"/>
+                                        <Button Content="&#xE70F;" Style="{StaticResource IconButton}"
+                                                ToolTip="Edit" Click="OnEditClick"
+                                                Tag="{Binding}"/>
+                                        <Button Content="&#xE74D;" Style="{StaticResource IconButton}"
+                                                ToolTip="Delete" Foreground="#FF99A4"
+                                                Click="OnDeleteClick" Tag="{Binding}"/>
+                                    </StackPanel>
+
+                                    <!-- Icon (left) -->
+                                    <Grid Width="32" Height="32" Margin="0,0,12,0"
+                                          VerticalAlignment="Center">
+                                        <Image Source="{Binding IconImagePath}" Width="32" Height="32"
+                                               Stretch="Uniform"
+                                               RenderOptions.BitmapScalingMode="HighQuality"/>
+                                        <Border CornerRadius="4" Opacity="0.6"
+                                                Visibility="{Binding FallbackVisibility}"
+                                                Background="#20FFFFFF">
+                                            <TextBlock Text="{Binding FallbackText}"
+                                                       FontSize="10" FontWeight="SemiBold"
+                                                       HorizontalAlignment="Center"
+                                                       VerticalAlignment="Center"
+                                                       Foreground="#99FFFFFF"/>
+                                        </Border>
+                                    </Grid>
+
+                                    <!-- Name + path (center) -->
+                                    <StackPanel VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding Name}" FontSize="14"
+                                                   Foreground="White"
+                                                   TextTrimming="CharacterEllipsis"/>
+                                        <TextBlock Text="{Binding Path}" FontSize="12"
+                                                   Foreground="#66FFFFFF"
+                                                   TextTrimming="CharacterEllipsis"/>
+                                    </StackPanel>
+                                </DockPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <!-- Add button -->
+                <Menu Margin="0,8,0,0">
+                    <MenuItem Header="+ Add item">
                         <MenuItem Header="EXE Application" Click="OnAddExeClick"/>
                         <MenuItem Header="URL" Click="OnAddUrlClick"/>
                         <MenuItem Header="Store App" Click="OnAddStoreClick"/>
                     </MenuItem>
                 </Menu>
-                <Separator Margin="4,0"/>
-                <Button x:Name="MoveUpButton" Content="&#x25B2;"
-                        Click="OnMoveUpClick" Margin="4,0,2,0" Padding="8,4"/>
-                <Button x:Name="MoveDownButton" Content="&#x25BC;"
-                        Click="OnMoveDownClick" Margin="0,0,4,0" Padding="8,4"/>
-                <Separator Margin="4,0"/>
-                <Button x:Name="RemoveButton" Content="Remove" Style="{StaticResource DangerButton}"
-                        Click="OnRemoveClick" Margin="4,0,0,0"/>
+
+                <!-- Bottom bar -->
+                <DockPanel Margin="0,16,0,0">
+                    <TextBlock Text="{Binding ItemCountText}" FontSize="11"
+                               Foreground="#66FFFFFF" VerticalAlignment="Center"/>
+                    <Button Content="Save and Refresh"
+                            Style="{DynamicResource AccentButtonStyle}"
+                            HorizontalAlignment="Right" DockPanel.Dock="Right"
+                            Command="{Binding SaveCommand}"/>
+                </DockPanel>
             </StackPanel>
-        </Border>
+        </ScrollViewer>
 
-        <!-- Main content: list + edit panel -->
-        <Grid>
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="180"/>
-                <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition Width="*"/>
-            </Grid.ColumnDefinitions>
+        <!-- Edit dialog overlay -->
+        <Grid Visibility="{Binding DialogVisibility}">
+            <!-- Dim backdrop -->
+            <Rectangle Fill="#80000000" MouseDown="OnBackdropClick"/>
 
-            <!-- Left: Item list -->
-            <ListBox x:Name="ItemList" Grid.Column="0"
-                     BorderThickness="0"
-                     AllowDrop="True"
-                     SelectionChanged="OnItemSelectionChanged"
-                     PreviewMouseLeftButtonDown="OnListPreviewMouseDown"
-                     PreviewMouseMove="OnListPreviewMouseMove"
-                     Drop="OnListDrop"
-                     DragOver="OnListDragOver">
-                <ListBox.ItemTemplate>
-                    <DataTemplate>
-                        <StackPanel Orientation="Horizontal" Margin="2,2">
-                            <TextBlock Text="⠿" FontSize="14" Opacity="0.3"
-                                       VerticalAlignment="Center" Margin="0,0,6,0"
-                                       Cursor="SizeAll"
-                                       ToolTip="Drag to reorder"/>
-                            <Grid Width="24" Height="24" Margin="0,0,8,0">
-                                <!-- Icon image (visible when loaded) -->
-                                <Image Source="{Binding IconPath}" Width="24" Height="24"
-                                       Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality"/>
-                                <!-- Fallback text badge (visible when no icon) -->
-                                <Border CornerRadius="3" Opacity="0.6"
-                                        Visibility="{Binding FallbackVisibility}"
-                                        Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
-                                    <TextBlock Text="{Binding TypeIcon}"
-                                               FontSize="10" FontWeight="SemiBold"
-                                               HorizontalAlignment="Center"
-                                               VerticalAlignment="Center"/>
-                                </Border>
-                            </Grid>
-                            <StackPanel VerticalAlignment="Center">
-                                <TextBlock Text="{Binding Name}" FontSize="12"/>
-                                <TextBlock Text="{Binding Type}" FontSize="10" Opacity="0.5"/>
-                            </StackPanel>
-                        </StackPanel>
-                    </DataTemplate>
-                </ListBox.ItemTemplate>
-            </ListBox>
+            <!-- Dialog card -->
+            <Border Background="#2D2D2D" CornerRadius="8"
+                    BorderBrush="#15FFFFFF" BorderThickness="1"
+                    MaxWidth="450" Padding="24"
+                    VerticalAlignment="Center" HorizontalAlignment="Center"
+                    Margin="24">
+                <StackPanel>
+                    <TextBlock Text="Edit Item" FontSize="18" FontWeight="SemiBold"
+                               Foreground="White" Margin="0,0,0,16"/>
 
-            <!-- Separator -->
-            <GridSplitter Grid.Column="1" Width="1" HorizontalAlignment="Center"
-                          Background="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"/>
-
-            <!-- Right: Edit panel -->
-            <ScrollViewer Grid.Column="2" VerticalScrollBarVisibility="Auto">
-                <StackPanel x:Name="EditPanel" Margin="16" Visibility="Collapsed">
                     <TextBlock Text="NAME" Style="{StaticResource FieldLabel}"/>
-                    <TextBox x:Name="NameBox" Margin="0,0,0,14"/>
+                    <TextBox Text="{Binding EditName, UpdateSourceTrigger=PropertyChanged}"
+                             Margin="0,0,0,12"/>
 
                     <TextBlock Text="TYPE" Style="{StaticResource FieldLabel}"/>
-                    <TextBlock x:Name="TypeLabel" Opacity="0.5"
-                               FontSize="13" Margin="0,0,0,14"
-                               Padding="6,5"/>
+                    <TextBlock Text="{Binding EditTypeLabel}" Foreground="#66FFFFFF"
+                               FontSize="13" Margin="0,0,0,12" Padding="6,5"/>
 
                     <TextBlock Text="PATH" Style="{StaticResource FieldLabel}"/>
-                    <DockPanel Margin="0,0,0,14">
-                        <Button x:Name="BrowsePathButton" Content="Browse"
-                                DockPanel.Dock="Right" Margin="4,0,0,0"
-                                Click="OnBrowsePathClick"/>
-                        <TextBox x:Name="PathBox"/>
+                    <DockPanel Margin="0,0,0,12">
+                        <Button Content="Browse" DockPanel.Dock="Right" Margin="4,0,0,0"
+                                Click="OnBrowsePathClick"
+                                Visibility="{Binding EditBrowsePathVisibility}"/>
+                        <TextBox Text="{Binding EditPath, UpdateSourceTrigger=PropertyChanged}"/>
                     </DockPanel>
 
-                    <StackPanel x:Name="ArgsPanel">
+                    <StackPanel Visibility="{Binding EditArgsVisibility}">
                         <TextBlock Text="ARGUMENTS" Style="{StaticResource FieldLabel}"/>
-                        <TextBox x:Name="ArgsBox" Margin="0,0,0,14"/>
+                        <TextBox Text="{Binding EditArgs, UpdateSourceTrigger=PropertyChanged}"
+                                 Margin="0,0,0,12"/>
                     </StackPanel>
 
                     <TextBlock Text="CUSTOM ICON" Style="{StaticResource FieldLabel}"/>
-                    <DockPanel Margin="0,0,0,14">
-                        <Button Content="Browse"
-                                DockPanel.Dock="Right" Margin="4,0,0,0"
+                    <DockPanel Margin="0,0,0,16">
+                        <Button Content="Browse" DockPanel.Dock="Right" Margin="4,0,0,0"
                                 Click="OnBrowseIconClick"/>
-                        <TextBox x:Name="IconBox"/>
+                        <TextBox Text="{Binding EditIcon, UpdateSourceTrigger=PropertyChanged}"/>
                     </DockPanel>
+
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button Content="Save" Style="{DynamicResource AccentButtonStyle}"
+                                Command="{Binding DialogSaveCommand}"
+                                Margin="0,0,8,0" MinWidth="80"/>
+                        <Button Content="Cancel"
+                                Command="{Binding DialogCancelCommand}"
+                                MinWidth="80"/>
+                    </StackPanel>
                 </StackPanel>
-            </ScrollViewer>
+            </Border>
         </Grid>
-    </DockPanel>
+    </Grid>
 </Window>

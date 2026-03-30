@@ -71,6 +71,7 @@ jobs:
           Copy-Item "${{ env.MSIX_PATH }}" "release\"
           Copy-Item "LaunchPad_Dev.cer" "release\"
           Copy-Item "Install.ps1" "release\"
+          Copy-Item "Uninstall.ps1" "release\"
           Compress-Archive -Path "release\*" -DestinationPath "LaunchPad-${{ github.ref_name }}.zip"
         shell: pwsh
 
@@ -87,9 +88,13 @@ jobs:
 
             The install script installs a developer certificate and the MSIX package. The certificate is only needed once — future updates just need the MSIX.
 
+            ## Uninstall
+
+            Right-click `Uninstall.ps1` → **Run with PowerShell** (as Administrator). This removes the package, certificate, and all saved data.
+
             ## Requirements
 
             - Windows 10 19041+ with Xbox Game Bar
-            - Administrator access (for certificate install)
+            - Administrator access (for certificate install/removal)
           files: |
             LaunchPad-${{ github.ref_name }}.zip

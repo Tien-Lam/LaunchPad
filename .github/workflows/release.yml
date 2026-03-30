@@ -26,23 +26,52 @@ jobs:
       - name: Run tests
         run: dotnet test LaunchPad.Tests/ --configuration Release --verbosity normal
 
-      - name: Build MSIX package
+      - name: Create signing certificate
+        run: |
+          $cert = New-SelfSignedCertificate `
+            -Type Custom `
+            -Subject "CN=Developer" `
+            -KeyUsage DigitalSignature `
+            -FriendlyName "LaunchPad Dev Certificate" `
+            -CertStoreLocation "Cert:\CurrentUser\My" `
+            -TextExtension @("2.5.29.37={text}1.3.6.1.5.5.7.3.3", "2.5.29.19={text}")
+          $password = ConvertTo-SecureString -String "LaunchPadBuild" -Force -AsPlainText
+          Export-PfxCertificate -cert "Cert:\CurrentUser\My\$($cert.Thumbprint)" `
+            -FilePath "$env:GITHUB_WORKSPACE\LaunchPad.Package\LaunchPad_Dev.pfx" `
+            -Password $password
+          Export-Certificate -Cert "Cert:\CurrentUser\My\$($cert.Thumbprint)" `
+            -FilePath "$env:GITHUB_WORKSPACE\LaunchPad_Dev.cer"
+          echo "CERT_THUMBPRINT=$($cert.Thumbprint)" >> $env:GITHUB_ENV
+        shell: pwsh
+
+      - name: Build signed MSIX
         run: >
           msbuild LaunchPad.sln
           /p:Configuration=Release
           /p:Platform=x64
           /p:AppxBundle=Never
-          /p:AppxPackageSigningEnabled=false
+          /p:AppxPackageSigningEnabled=true
+          /p:PackageCertificateThumbprint=${{ env.CERT_THUMBPRINT }}
+          /p:PackageCertificatePassword=LaunchPadBuild
+          /p:PackageCertificateKeyFile=${{ github.workspace }}\LaunchPad.Package\LaunchPad_Dev.pfx
           /restore
 
       - name: Find MSIX
-        id: find-msix
         run: |
           $msix = Get-ChildItem -Path "LaunchPad.Package\AppPackages" -Recurse -Filter "*.msix" | Select-Object -First 1
           if (-not $msix) { Write-Error "No MSIX found"; exit 1 }
           Write-Host "Found: $($msix.FullName)"
           echo "MSIX_PATH=$($msix.FullName)" >> $env:GITHUB_ENV
           echo "MSIX_NAME=$($msix.Name)" >> $env:GITHUB_ENV
+        shell: pwsh
+
+      - name: Create release zip
+        run: |
+          New-Item -ItemType Directory -Path "release" -Force
+          Copy-Item "${{ env.MSIX_PATH }}" "release\"
+          Copy-Item "LaunchPad_Dev.cer" "release\"
+          Copy-Item "Install.ps1" "release\"
+          Compress-Archive -Path "release\*" -DestinationPath "LaunchPad-${{ github.ref_name }}.zip"
         shell: pwsh
 
       - name: Create GitHub Release
@@ -52,14 +81,15 @@ jobs:
           body: |
             ## Installation
 
-            1. Enable **Developer Mode** in Windows Settings → System → For Developers
-            2. Download the `.msix` file below
-            3. Double-click to install
-            4. Open Game Bar (Win+G) and enable the LaunchPad widget from the widget menu
+            1. Download `LaunchPad-${{ github.ref_name }}.zip` and extract it
+            2. Right-click `Install.ps1` → **Run with PowerShell** (as Administrator)
+            3. Open Game Bar (**Win+G**) and enable the LaunchPad widget from the widget menu
+
+            The install script installs a developer certificate and the MSIX package. The certificate is only needed once — future updates just need the MSIX.
 
             ## Requirements
 
             - Windows 10 19041+ with Xbox Game Bar
-            - Developer Mode enabled (for sideloading)
+            - Administrator access (for certificate install)
           files: |
-            ${{ env.MSIX_PATH }}
+            LaunchPad-${{ github.ref_name }}.zip

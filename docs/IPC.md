@@ -1,12 +1,12 @@
 # IPC Protocol Reference
 
-Inter-process communication protocol between the LaunchPad UWP widget and the .NET 8 Win32 companion process.
+Inter-process communication protocol between the LaunchDeck UWP widget and the .NET 8 Win32 companion process.
 
 ## Transport
 
 Communication uses **Windows App Service** (`Windows.ApplicationModel.AppService`). Messages are `ValueSet` dictionaries (string keys, object values). All values used in this protocol are strings.
 
-- **Service name:** `com.launchpad.service`
+- **Service name:** `com.launchdeck.service`
 - **Registration:** Declared in `Package.appxmanifest` under `<uap:Extension Category="windows.appService">`
 - **Direction:** Primarily request/response (widget sends requests, companion responds via `SendResponseAsync`). The companion can also send unsolicited push messages to the widget (e.g., `config-updated`).
 
@@ -16,9 +16,9 @@ The App Service runs in-process with the widget (background task), giving the co
 
 ### Companion (client) -- Program.cs
 
-1. On startup, the companion acquires a single-instance mutex (`Local\LaunchPadCompanion`). If already held, the process exits immediately.
+1. On startup, the companion acquires a single-instance mutex (`Local\LaunchDeckCompanion`). If already held, the process exits immediately.
 2. Creates an `AppServiceConnection` with:
-   - `AppServiceName = "com.launchpad.service"`
+   - `AppServiceName = "com.launchdeck.service"`
    - `PackageFamilyName = Package.Current.Id.FamilyName`
 3. Registers `RequestReceived` handler for inbound messages.
 4. Registers `ServiceClosed` handler that signals an exit event.
@@ -139,7 +139,7 @@ ValueSet { ["status"] = "error", ["error"] = "The system cannot find the file sp
 
 ### `extract-icon`
 
-Extracts the associated icon from an EXE file and saves it as a PNG in the icon cache directory (`%LOCALAPPDATA%\LaunchPad\icons\`). Uses SHA-256 hash of the input path for the cache filename. Returns a cached result if the cache file is newer than the EXE.
+Extracts the associated icon from an EXE file and saves it as a PNG in the icon cache directory (`%LOCALAPPDATA%\LaunchDeck\icons\`). Uses SHA-256 hash of the input path for the cache filename. Returns a cached result if the cache file is newer than the EXE.
 
 **Request:**
 
@@ -169,7 +169,7 @@ ValueSet {
 ```
 ValueSet {
     ["status"]   = "ok",
-    ["iconPath"] = "C:\\Users\\user\\AppData\\Local\\LaunchPad\\icons\\a1b2c3d4e5f67890.png"
+    ["iconPath"] = "C:\\Users\\user\\AppData\\Local\\LaunchDeck\\icons\\a1b2c3d4e5f67890.png"
 }
 ```
 
@@ -209,7 +209,7 @@ ValueSet {
 ```
 ValueSet {
     ["status"]   = "ok",
-    ["iconPath"] = "C:\\Users\\user\\AppData\\Local\\LaunchPad\\icons\\9f8e7d6c5b4a3210.png"
+    ["iconPath"] = "C:\\Users\\user\\AppData\\Local\\LaunchDeck\\icons\\9f8e7d6c5b4a3210.png"
 }
 ```
 
@@ -285,7 +285,7 @@ ValueSet {
 
 ### `load-config`
 
-Loads the LaunchPad configuration from a JSON file on disk. The default path is `%LOCALAPPDATA%\LaunchPad\config.json` (with UWP virtualization stripped).
+Loads the LaunchDeck configuration from a JSON file on disk. The default path is `%LOCALAPPDATA%\LaunchDeck\config.json` (with UWP virtualization stripped).
 
 **Request:**
 
@@ -300,7 +300,7 @@ Loads the LaunchPad configuration from a JSON file on disk. The default path is 
 |--------------|--------|--------------------------------|------------------------------------------------------|
 | `status`     | string | always                         | `"success"`, `"filenotfound"`, or `"parseerror"`     |
 | `configPath` | string | always                         | The resolved config file path that was used          |
-| `json`       | string | when status is `"success"`     | Serialized `LaunchPadConfig` as compact JSON         |
+| `json`       | string | when status is `"success"`     | Serialized `LaunchDeckConfig` as compact JSON         |
 | `error`      | string | when status is `"parseerror"`  | JSON parse error message                             |
 
 The `status` values map to the `ConfigLoadStatus` enum (`Success`, `FileNotFound`, `ParseError`), lowercased via `ToString().ToLowerInvariant()`.
@@ -325,7 +325,7 @@ ValueSet {
 ```
 ValueSet {
     ["status"]     = "success",
-    ["configPath"] = "C:\\Users\\user\\AppData\\Local\\LaunchPad\\config.json",
+    ["configPath"] = "C:\\Users\\user\\AppData\\Local\\LaunchDeck\\config.json",
     ["json"]       = "{\"items\":[{\"name\":\"Notepad\",\"type\":\"Exe\",\"path\":\"notepad.exe\",\"args\":null,\"icon\":null}]}"
 }
 ```
@@ -335,7 +335,7 @@ ValueSet {
 ```
 ValueSet {
     ["status"]     = "filenotfound",
-    ["configPath"] = "C:\\Users\\user\\AppData\\Local\\LaunchPad\\config.json"
+    ["configPath"] = "C:\\Users\\user\\AppData\\Local\\LaunchDeck\\config.json"
 }
 ```
 
@@ -344,12 +344,12 @@ ValueSet {
 ```
 ValueSet {
     ["status"]     = "parseerror",
-    ["configPath"] = "C:\\Users\\user\\AppData\\Local\\LaunchPad\\config.json",
+    ["configPath"] = "C:\\Users\\user\\AppData\\Local\\LaunchDeck\\config.json",
     ["error"]      = "'i' is an invalid start of a value. LineNumber: 0 | BytePositionInLine: 0."
 }
 ```
 
-**Widget client:** `CompanionClient.LoadConfigAsync()` returns a tuple `(ConfigLoadStatus Status, LaunchPadConfig? Config, string? ConfigPath, string? Error)`.
+**Widget client:** `CompanionClient.LoadConfigAsync()` returns a tuple `(ConfigLoadStatus Status, LaunchDeckConfig? Config, string? ConfigPath, string? Error)`.
 
 **Config JSON schema:**
 
@@ -393,7 +393,7 @@ If the editor is already open, the companion focuses the existing window instead
 ```
 ValueSet {
     ["action"]     = "open-editor",
-    ["configPath"] = "C:\\Users\\user\\AppData\\Local\\LaunchPad\\config.json"
+    ["configPath"] = "C:\\Users\\user\\AppData\\Local\\LaunchDeck\\config.json"
 }
 ```
 
@@ -536,22 +536,22 @@ Widget UI                CompanionClient              Companion
 
 | Path                                           | Purpose                        |
 |------------------------------------------------|--------------------------------|
-| `%LOCALAPPDATA%\LaunchPad\config.json`         | Default configuration file     |
-| `%LOCALAPPDATA%\LaunchPad\icons\`              | Cached icon PNGs               |
-| `%LOCALAPPDATA%\LaunchPad\icons\<hash>.png`    | Individual cached icon (SHA-256 hash of source path/URL, first 16 hex chars) |
+| `%LOCALAPPDATA%\LaunchDeck\config.json`         | Default configuration file     |
+| `%LOCALAPPDATA%\LaunchDeck\icons\`              | Cached icon PNGs               |
+| `%LOCALAPPDATA%\LaunchDeck\icons\<hash>.png`    | Individual cached icon (SHA-256 hash of source path/URL, first 16 hex chars) |
 
 ## Source Files
 
 | File                                              | Role                                |
 |---------------------------------------------------|-------------------------------------|
-| `LaunchPad.Widget/App.xaml.cs`                    | Connection setup (server/receiver)  |
-| `LaunchPad.Widget/Services/CompanionClient.cs`    | Widget-side request helpers         |
-| `LaunchPad.Companion/Program.cs`                  | Connection setup + action dispatch  |
-| `LaunchPad.Companion/LaunchHandler.cs`            | Process launch logic                |
-| `LaunchPad.Companion/IconExtractor.cs`            | Icon extraction and favicon fetch   |
-| `LaunchPad.Companion/ExePicker.cs`                | File picker dialog and config append|
-| `LaunchPad.Shared/ConfigModels.cs`                | Config types, loader, and saver     |
-| `LaunchPad.Package/Package.appxmanifest`          | App Service declaration             |
+| `LaunchDeck.Widget/App.xaml.cs`                    | Connection setup (server/receiver)  |
+| `LaunchDeck.Widget/Services/CompanionClient.cs`    | Widget-side request helpers         |
+| `LaunchDeck.Companion/Program.cs`                  | Connection setup + action dispatch  |
+| `LaunchDeck.Companion/LaunchHandler.cs`            | Process launch logic                |
+| `LaunchDeck.Companion/IconExtractor.cs`            | Icon extraction and favicon fetch   |
+| `LaunchDeck.Companion/ExePicker.cs`                | File picker dialog and config append|
+| `LaunchDeck.Shared/ConfigModels.cs`                | Config types, loader, and saver     |
+| `LaunchDeck.Package/Package.appxmanifest`          | App Service declaration             |
 
 ## See Also
 

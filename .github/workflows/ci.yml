@@ -19,10 +19,10 @@ jobs:
           dotnet-version: '10.0.x'
 
       - name: Build Shared
-        run: dotnet build LaunchPad.Shared/LaunchPad.Shared.csproj --configuration Release
+        run: dotnet build LaunchDeck.Shared/LaunchDeck.Shared.csproj --configuration Release
 
       - name: Build Companion
-        run: dotnet build LaunchPad.Companion/LaunchPad.Companion.csproj --configuration Release
+        run: dotnet build LaunchDeck.Companion/LaunchDeck.Companion.csproj --configuration Release
 
       - name: Run Tests
-        run: dotnet test LaunchPad.Tests/ --configuration Release --verbosity normal
+        run: dotnet test LaunchDeck.Tests/ --configuration Release --verbosity normal

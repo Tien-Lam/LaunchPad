@@ -1,0 +1,162 @@
+<Window x:Class="LaunchDeck.Companion.Editor.EditorWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:editor="clr-namespace:LaunchDeck.Companion.Editor"
+        Title="LaunchDeck — Config Editor"
+        Width="520" Height="550"
+        MinWidth="400" MinHeight="350"
+        WindowStartupLocation="CenterScreen">
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="EditorTheme.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Window.Resources>
+
+    <Grid Background="{StaticResource PageBackground}">
+        <!-- Main scrollable content -->
+        <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="24,20">
+            <StackPanel MaxWidth="480">
+                <!-- Page header -->
+                <TextBlock Text="LaunchDeck" Style="{StaticResource PageTitle}"
+                           Margin="0,0,0,2"/>
+                <TextBlock Text="Configure your launch items" FontSize="12"
+                           Foreground="{StaticResource TextSecondary}" Margin="0,0,0,20"/>
+
+                <!-- Section header -->
+                <TextBlock Text="Items" Style="{StaticResource SectionHeader}"/>
+
+                <!-- Item cards -->
+                <ItemsControl ItemsSource="{Binding Items}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate DataType="{x:Type editor:ItemViewModel}">
+                            <Border Style="{StaticResource SettingsCard}">
+                                <DockPanel>
+                                    <!-- Action buttons (right) -->
+                                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal"
+                                                VerticalAlignment="Center" Margin="8,0,0,0">
+                                        <Button Content="&#xE70E;" Style="{StaticResource IconButton}"
+                                                ToolTip="Move up" Click="OnMoveUpClick"
+                                                Tag="{Binding}"/>
+                                        <Button Content="&#xE70D;" Style="{StaticResource IconButton}"
+                                                ToolTip="Move down" Click="OnMoveDownClick"
+                                                Tag="{Binding}"/>
+                                        <Button Content="&#xE70F;" Style="{StaticResource IconButton}"
+                                                ToolTip="Edit" Click="OnEditClick"
+                                                Tag="{Binding}"/>
+                                        <Button Content="&#xE74D;" Style="{StaticResource IconButton}"
+                                                ToolTip="Delete"
+                                                Foreground="{StaticResource DangerForeground}"
+                                                Click="OnDeleteClick" Tag="{Binding}"/>
+                                    </StackPanel>
+
+                                    <!-- Icon (left) -->
+                                    <Grid Width="32" Height="32" Margin="0,0,12,0"
+                                          VerticalAlignment="Center">
+                                        <Image Source="{Binding IconImagePath}" Width="32" Height="32"
+                                               Stretch="Uniform"
+                                               RenderOptions.BitmapScalingMode="HighQuality"/>
+                                        <Border CornerRadius="4" Opacity="0.6"
+                                                Visibility="{Binding FallbackVisibility}"
+                                                Background="{StaticResource FallbackBadge}">
+                                            <TextBlock Text="{Binding FallbackText}"
+                                                       FontSize="10" FontWeight="SemiBold"
+                                                       HorizontalAlignment="Center"
+                                                       VerticalAlignment="Center"
+                                                       Foreground="{StaticResource TextSecondary}"/>
+                                        </Border>
+                                    </Grid>
+
+                                    <!-- Name + path (center) -->
+                                    <StackPanel VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding Name}" FontSize="14"
+                                                   Foreground="{StaticResource TextPrimary}"
+                                                   TextTrimming="CharacterEllipsis"/>
+                                        <TextBlock Text="{Binding Path}" FontSize="12"
+                                                   Foreground="{StaticResource TextTertiary}"
+                                                   TextTrimming="CharacterEllipsis"/>
+                                    </StackPanel>
+                                </DockPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <!-- Add button -->
+                <Menu Margin="0,8,0,0">
+                    <MenuItem Header="+ Add item">
+                        <MenuItem Header="EXE Application" Click="OnAddExeClick"/>
+                        <MenuItem Header="URL" Click="OnAddUrlClick"/>
+                        <MenuItem Header="Store App" Click="OnAddStoreClick"/>
+                    </MenuItem>
+                </Menu>
+
+                <!-- Bottom bar -->
+                <DockPanel Margin="0,16,0,0">
+                    <TextBlock Text="{Binding ItemCountText}" FontSize="11"
+                               Foreground="{StaticResource TextTertiary}"
+                               VerticalAlignment="Center"/>
+                    <Button Content="Save and Refresh"
+                            Style="{DynamicResource AccentButtonStyle}"
+                            HorizontalAlignment="Right" DockPanel.Dock="Right"
+                            Command="{Binding SaveCommand}"/>
+                </DockPanel>
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- Edit dialog overlay -->
+        <Grid Visibility="{Binding DialogVisibility}">
+            <Rectangle Fill="{StaticResource BackdropOverlay}" MouseDown="OnBackdropClick"/>
+
+            <Border Style="{StaticResource DialogCard}"
+                    MaxWidth="450"
+                    VerticalAlignment="Center" HorizontalAlignment="Stretch"
+                    Margin="36,24">
+                <StackPanel>
+                    <TextBlock Text="Edit Item" FontSize="18" FontWeight="SemiBold"
+                               Foreground="{StaticResource TextPrimary}" Margin="0,0,0,16"/>
+
+                    <TextBlock Text="NAME" Style="{StaticResource FieldLabel}"/>
+                    <TextBox Text="{Binding EditName, UpdateSourceTrigger=PropertyChanged}"
+                             Margin="0,0,0,12"/>
+
+                    <TextBlock Text="TYPE" Style="{StaticResource FieldLabel}"/>
+                    <TextBlock Text="{Binding EditTypeLabel}"
+                               Foreground="{StaticResource TextTertiary}"
+                               FontSize="13" Margin="0,0,0,12" Padding="6,5"/>
+
+                    <TextBlock Text="PATH" Style="{StaticResource FieldLabel}"/>
+                    <DockPanel Margin="0,0,0,12">
+                        <Button Content="Browse" DockPanel.Dock="Right" Margin="4,0,0,0"
+                                Click="OnBrowsePathClick"
+                                Visibility="{Binding EditBrowsePathVisibility}"/>
+                        <TextBox Text="{Binding EditPath, UpdateSourceTrigger=PropertyChanged}"/>
+                    </DockPanel>
+
+                    <StackPanel Visibility="{Binding EditArgsVisibility}">
+                        <TextBlock Text="ARGUMENTS" Style="{StaticResource FieldLabel}"/>
+                        <TextBox Text="{Binding EditArgs, UpdateSourceTrigger=PropertyChanged}"
+                                 Margin="0,0,0,12"/>
+                    </StackPanel>
+
+                    <TextBlock Text="CUSTOM ICON" Style="{StaticResource FieldLabel}"/>
+                    <DockPanel Margin="0,0,0,16">
+                        <Button Content="Browse" DockPanel.Dock="Right" Margin="4,0,0,0"
+                                Click="OnBrowseIconClick"/>
+                        <TextBox Text="{Binding EditIcon, UpdateSourceTrigger=PropertyChanged}"/>
+                    </DockPanel>
+
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button Content="Save" Style="{DynamicResource AccentButtonStyle}"
+                                Command="{Binding DialogSaveCommand}"
+                                Margin="0,0,8,0" MinWidth="80"/>
+                        <Button Content="Cancel"
+                                Command="{Binding DialogCancelCommand}"
+                                MinWidth="80"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </Grid>
+    </Grid>
+</Window>

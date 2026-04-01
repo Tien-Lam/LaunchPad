@@ -2,24 +2,24 @@
 
 ## Overview
 
-LaunchPad uses **xUnit 2.9** on **.NET 8** (`net8.0-windows10.0.19041.0`) for automated testing. Tests live in the `LaunchPad.Tests` project, which references both `LaunchPad.Shared` and `LaunchPad.Companion`.
+LaunchDeck uses **xUnit 2.9** on **.NET 8** (`net8.0-windows10.0.19041.0`) for automated testing. Tests live in the `LaunchDeck.Tests` project, which references both `LaunchDeck.Shared` and `LaunchDeck.Companion`.
 
 ## Running Tests
 
 ```bash
-dotnet test LaunchPad.Tests/
+dotnet test LaunchDeck.Tests/
 ```
 
 To run with verbose output:
 
 ```bash
-dotnet test LaunchPad.Tests/ --logger "console;verbosity=detailed"
+dotnet test LaunchDeck.Tests/ --logger "console;verbosity=detailed"
 ```
 
 To run a specific test class:
 
 ```bash
-dotnet test LaunchPad.Tests/ --filter "FullyQualifiedName~LaunchHandlerTests"
+dotnet test LaunchDeck.Tests/ --filter "FullyQualifiedName~LaunchHandlerTests"
 ```
 
 Platform note: the csproj supports `x64`, `x86`, and `ARM`. The default `dotnet test` invocation uses AnyCPU / the host architecture, which works for all current tests.
@@ -39,7 +39,7 @@ No mocking framework is used. All tests are direct unit tests against concrete i
 
 ### ConfigModelsTests (9 tests)
 
-Tests the shared configuration model (`LaunchPad.Shared.ConfigModels`) -- JSON serialization, deserialization, and the `ConfigLoader` utility.
+Tests the shared configuration model (`LaunchDeck.Shared.ConfigModels`) -- JSON serialization, deserialization, and the `ConfigLoader` utility.
 
 | Test | What it verifies |
 |------|-----------------|
@@ -53,11 +53,11 @@ Tests the shared configuration model (`LaunchPad.Shared.ConfigModels`) -- JSON s
 | `ConfigLoader_Save_WritesValidJson` | Round-trips a config through `Save` then `Load`; verifies data integrity |
 | `ConfigLoader_Save_PreservesAllFields` | Round-trip preserves optional fields (`Args`, `Icon`) |
 
-Source under test: `LaunchPad.Shared/ConfigModels.cs`
+Source under test: `LaunchDeck.Shared/ConfigModels.cs`
 
 ### LaunchHandlerTests (5 tests)
 
-Tests the companion process launch logic (`LaunchPad.Companion.LaunchHandler`), specifically the `BuildProcessStartInfo` static method.
+Tests the companion process launch logic (`LaunchDeck.Companion.LaunchHandler`), specifically the `BuildProcessStartInfo` static method.
 
 | Test | What it verifies |
 |------|-----------------|
@@ -67,11 +67,11 @@ Tests the companion process launch logic (`LaunchPad.Companion.LaunchHandler`), 
 | `BuildProcessStartInfo_Store_SetsFileNameToProtocol` | Store type sets `FileName` to the protocol URI |
 | `BuildProcessStartInfo_UnknownType_ThrowsArgumentException` | Unknown type string throws `ArgumentException` |
 
-Source under test: `LaunchPad.Companion/LaunchHandler.cs`
+Source under test: `LaunchDeck.Companion/LaunchHandler.cs`
 
 ### IconExtractorTests (5 tests)
 
-Tests icon caching and extraction utilities (`LaunchPad.Companion.IconExtractor`).
+Tests icon caching and extraction utilities (`LaunchDeck.Companion.IconExtractor`).
 
 | Test | What it verifies |
 |------|-----------------|
@@ -81,13 +81,13 @@ Tests icon caching and extraction utilities (`LaunchPad.Companion.IconExtractor`
 | `ExtractFromExe_NonexistentExe_ReturnsFailure` | Nonexistent EXE path returns `Success = false` |
 | `GetFaviconUrl_ExtractsDomain` | Extracts the domain from a full URL for favicon lookup |
 
-Source under test: `LaunchPad.Companion/IconExtractor.cs`
+Source under test: `LaunchDeck.Companion/IconExtractor.cs`
 
 Note: `ExtractFromExe_ValidExe_SavesPng` depends on `C:\Windows\notepad.exe` being present on the machine. This test will fail in environments without a standard Windows installation (e.g., minimal containers).
 
 ### ExePickerTests (5 tests)
 
-Tests the EXE picker logic (`LaunchPad.Companion.ExePicker`) for display name extraction and config manipulation.
+Tests the EXE picker logic (`LaunchDeck.Companion.ExePicker`) for display name extraction and config manipulation.
 
 | Test | What it verifies |
 |------|-----------------|
@@ -97,7 +97,7 @@ Tests the EXE picker logic (`LaunchPad.Companion.ExePicker`) for display name ex
 | `AppendToConfig_AddsNewItem` | Adds a new EXE item to config; checks name, type, and path |
 | `AppendToConfig_DoesNotAddDuplicate` | Adding the same path twice results in only one item |
 
-Source under test: `LaunchPad.Companion/ExePicker.cs`
+Source under test: `LaunchDeck.Companion/ExePicker.cs`
 
 Note: `GetDisplayName_Notepad_ReturnsFileDescription` reads version info from a real EXE on disk. It is Windows-specific.
 
@@ -115,7 +115,7 @@ This project uses a straightforward approach to testing:
 
 Several areas of the codebase are not covered by automated tests due to runtime and environmental constraints:
 
-### UWP Widget UI (`LaunchPad.Widget`)
+### UWP Widget UI (`LaunchDeck.Widget`)
 
 The widget project is a UWP XAML app that runs inside the Xbox Game Bar host process. It requires the Game Bar runtime to instantiate `XboxGameBarWidget` objects and render XAML. There is no headless UWP test host that can simulate this environment, so all widget UI behavior is manual-test only.
 
@@ -144,11 +144,11 @@ The `Launch` method calls `Process.Start`, which actually spawns a process. `Bui
 
 | Layer | Testable? | How |
 |-------|-----------|-----|
-| `LaunchPad.Shared` (config models, loader, serialization) | Yes | xUnit unit tests |
-| `LaunchPad.Companion` (launch logic, icon cache naming, favicon URL, exe picker) | Yes | xUnit unit tests |
-| `LaunchPad.Companion` (icon extraction from real EXEs) | Partially | xUnit with known OS fixtures (`notepad.exe`) |
-| `LaunchPad.Companion` (process launching) | No | Side-effectful; tested manually |
-| `LaunchPad.Widget` (XAML UI, data binding, grid layout) | No | Requires Game Bar runtime; manual only |
+| `LaunchDeck.Shared` (config models, loader, serialization) | Yes | xUnit unit tests |
+| `LaunchDeck.Companion` (launch logic, icon cache naming, favicon URL, exe picker) | Yes | xUnit unit tests |
+| `LaunchDeck.Companion` (icon extraction from real EXEs) | Partially | xUnit with known OS fixtures (`notepad.exe`) |
+| `LaunchDeck.Companion` (process launching) | No | Side-effectful; tested manually |
+| `LaunchDeck.Widget` (XAML UI, data binding, grid layout) | No | Requires Game Bar runtime; manual only |
 | App Service IPC (widget <-> companion) | No | Requires MSIX deployment; manual only |
 | MSIX packaging and activation | No | Requires deployment; manual only |
 
@@ -164,16 +164,16 @@ For areas that cannot be automated, follow this procedure:
 
 ### Deploy and Launch
 
-1. Open `LaunchPad.sln` in Visual Studio.
-2. Set `LaunchPad.Package` as the startup project.
+1. Open `LaunchDeck.sln` in Visual Studio.
+2. Set `LaunchDeck.Package` as the startup project.
 3. Set platform to `x64` and configuration to `Debug`.
 4. Press F5 (or Deploy without debugging via Ctrl+F5).
 5. Open Xbox Game Bar with `Win+G`.
-6. Find the LaunchPad widget in the widget menu and pin it.
+6. Find the LaunchDeck widget in the widget menu and pin it.
 
 ### Manual Test Checklist
 
-- **Config loading:** Place a valid `config.json` in `%LOCALAPPDATA%\LaunchPad\config.json`. Verify the widget displays the configured items in a grid.
+- **Config loading:** Place a valid `config.json` in `%LOCALAPPDATA%\LaunchDeck\config.json`. Verify the widget displays the configured items in a grid.
 - **EXE launch:** Click an EXE-type item. Verify the application starts.
 - **URL launch:** Click a URL-type item. Verify the browser opens to the correct URL.
 - **Store app launch:** Click a store-type item. Verify the store app launches.
@@ -187,10 +187,10 @@ For areas that cannot be automated, follow this procedure:
 The project includes `coverlet.collector` for coverage data. To generate a coverage report:
 
 ```bash
-dotnet test LaunchPad.Tests/ --collect:"XPlat Code Coverage"
+dotnet test LaunchDeck.Tests/ --collect:"XPlat Code Coverage"
 ```
 
-Coverage results are written to `LaunchPad.Tests/TestResults/`. Use a tool like `reportgenerator` to produce HTML reports from the generated Cobertura XML.
+Coverage results are written to `LaunchDeck.Tests/TestResults/`. Use a tool like `reportgenerator` to produce HTML reports from the generated Cobertura XML.
 
 ## See Also
 

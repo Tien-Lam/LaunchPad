@@ -2,12 +2,12 @@
 
 ## System Overview
 
-LaunchPad is an Xbox Game Bar widget (Win+G) that launches apps from a configurable grid. It runs as a single MSIX package containing two processes that communicate over App Service IPC.
+LaunchDeck is an Xbox Game Bar widget (Win+G) that launches apps from a configurable grid. It runs as a single MSIX package containing two processes that communicate over App Service IPC.
 
 ```
 +---------------------------+          App Service IPC          +---------------------------+
-|   LaunchPad.Widget (UWP)  | <-------- ValueSet msgs -------> | LaunchPad.Companion (.NET) |
-|                           |        com.launchpad.service      |                           |
+|   LaunchDeck.Widget (UWP)  | <-------- ValueSet msgs -------> | LaunchDeck.Companion (.NET) |
+|                           |        com.launchdeck.service      |                           |
 |  - XAML grid UI           |                                   |  - EXE/URL/Store launch   |
 |  - Game Bar integration   |                                   |  - Config file I/O        |
 |  - Icon display           |                                   |  - Icon extraction        |
@@ -17,7 +17,7 @@ LaunchPad is an Xbox Game Bar widget (Win+G) that launches apps from a configura
               |  references                                                  |  references
               v                                                              v
 +---------------------------+                              +---------------------------+
-|  LaunchPad.Shared         |                              |  LaunchPad.Shared         |
+|  LaunchDeck.Shared         |                              |  LaunchDeck.Shared         |
 |  (.NET Standard 2.0)      |                              |  (.NET Standard 2.0)      |
 |  - ConfigModels           |                              |  - ConfigModels           |
 |  - ConfigLoader           |                              |  - ConfigLoader           |
@@ -38,11 +38,11 @@ The companion is a full-trust .NET 8 Win32 process that does all of this on beha
 
 | Project | Framework | Purpose |
 |---------|-----------|---------|
-| `LaunchPad.Widget` | UWP (netcore 6.2.14) | Game Bar widget UI |
-| `LaunchPad.Companion` | .NET 8 (WinExe) | Full-trust helper process |
-| `LaunchPad.Shared` | .NET Standard 2.0 | Config models, shared by both |
-| `LaunchPad.Package` | WAPPROJ | MSIX packaging, manifest, assets |
-| `LaunchPad.Tests` | .NET 8 (xunit) | Unit tests for companion/shared |
+| `LaunchDeck.Widget` | UWP (netcore 6.2.14) | Game Bar widget UI |
+| `LaunchDeck.Companion` | .NET 8 (WinExe) | Full-trust helper process |
+| `LaunchDeck.Shared` | .NET Standard 2.0 | Config models, shared by both |
+| `LaunchDeck.Package` | WAPPROJ | MSIX packaging, manifest, assets |
+| `LaunchDeck.Tests` | .NET 8 (xunit) | Unit tests for companion/shared |
 
 ## IPC Protocol
 
@@ -73,7 +73,7 @@ All communication uses `ValueSet` messages over `AppServiceConnection`. Every re
 
 ### Companion Lifecycle
 - Launched by widget via `FullTrustProcessLauncher` on load
-- Named mutex (`Local\LaunchPadCompanion`) prevents duplicate instances
+- Named mutex (`Local\LaunchDeckCompanion`) prevents duplicate instances
 - Exits when App Service connection closes (Game Bar dismisses widget)
 - `OutputType=WinExe` -- no console window
 
@@ -84,7 +84,7 @@ All communication uses `ValueSet` messages over `AppServiceConnection`. Every re
 
 ## Config
 
-Location: `%LOCALAPPDATA%\LaunchPad\config.json`
+Location: `%LOCALAPPDATA%\LaunchDeck\config.json`
 
 Three item types: `exe` (local executables), `url` (web URLs), `store` (UWP/Store apps via `shell:AppsFolder\{AUMID}`). See `config.sample.json` for format.
 

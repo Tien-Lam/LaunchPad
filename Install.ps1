@@ -1,7 +1,7 @@
 #Requires -RunAsAdministrator
 <#
 .SYNOPSIS
-    Installs LaunchPad Game Bar widget.
+    Installs LaunchDeck Game Bar widget.
 .DESCRIPTION
     Installs the developer certificate to Trusted People store,
     then installs the MSIX package. Requires administrator privileges.
@@ -22,4 +22,4 @@ Write-Host "Certificate installed." -ForegroundColor Green
 
 Write-Host "Installing package: $($msix.Name)" -ForegroundColor Cyan
 Add-AppxPackage -Path $msix.FullName
-Write-Host "LaunchPad installed. Open Game Bar (Win+G) and enable the widget." -ForegroundColor Green
+Write-Host "LaunchDeck installed. Open Game Bar (Win+G) and enable the widget." -ForegroundColor Green

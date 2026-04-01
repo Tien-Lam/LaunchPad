@@ -1,15 +1,15 @@
-# LaunchPad UI Documentation
+# LaunchDeck UI Documentation
 
-This document describes the UI architecture, theming, layout, interactive behaviors, and activation flow for the LaunchPad Xbox Game Bar widget.
+This document describes the UI architecture, theming, layout, interactive behaviors, and activation flow for the LaunchDeck Xbox Game Bar widget.
 
 ---
 
 ## Dark Theme Approach
 
-LaunchPad uses a hardcoded dark theme following the ToothNClaw Game Bar widget pattern:
+LaunchDeck uses a hardcoded dark theme following the ToothNClaw Game Bar widget pattern:
 
 - `App.xaml` sets `RequestedTheme="Dark"` at the Application level.
-- `LaunchPadWidget.xaml` sets `Background="#202020"` directly on the Page element and repeats `RequestedTheme="Dark"`.
+- `LaunchDeckWidget.xaml` sets `Background="#202020"` directly on the Page element and repeats `RequestedTheme="Dark"`.
 - There is **no** Game Bar theme event handling. The widget does not subscribe to `XboxGameBarWidget.ThemeChanged`. The dark appearance is entirely self-managed.
 - The widget **does** subscribe to `XboxGameBarWidget.RequestedOpacityChanged` to honor the Game Bar's opacity slider (see Opacity Support below).
 - This avoids flickering and inconsistencies that can occur when trying to dynamically match the Game Bar overlay theme.
@@ -30,7 +30,7 @@ Only the background becomes transparent — text, icons, and tile content stay f
 
 ## Color Palette
 
-All colors are defined as `SolidColorBrush` resources in `LaunchPadWidget.xaml` `Page.Resources`, except the page background which is set inline.
+All colors are defined as `SolidColorBrush` resources in `LaunchDeckWidget.xaml` `Page.Resources`, except the page background which is set inline.
 
 | Token                          | Hex          | Usage                                      |
 |--------------------------------|--------------|--------------------------------------------|
@@ -306,12 +306,12 @@ The widget is not a standalone app. If launched directly (e.g., from Start menu)
 3. Casts to `XboxGameBarWidgetActivatedEventArgs` and checks `IsLaunchActivation`.
 4. Creates a `Frame`, sets it as `Window.Current.Content`.
 5. Instantiates `XboxGameBarWidget` with the activation args, `CoreWindow`, and the frame.
-6. Navigates the frame to `LaunchPadWidget` page.
+6. Navigates the frame to `LaunchDeckWidget` page.
 7. Calls `Window.Current.Activate()`.
 
 ### OnBackgroundActivated (App Service)
 
-When the companion process connects via the `com.launchpad.service` App Service:
+When the companion process connects via the `com.launchdeck.service` App Service:
 
 1. Captures the `AppServiceConnection` from `AppServiceTriggerDetails`.
 2. Stores it in both a private field and the static `App.CompanionConnection` property for use by `CompanionClient`.
@@ -325,7 +325,7 @@ Nulls the widget and companion connection references, then completes the deferra
 
 ## LaunchItem Model
 
-**File**: `LaunchPad.Widget\Models\LaunchItem.cs`
+**File**: `LaunchDeck.Widget\Models\LaunchItem.cs`
 
 Implements `INotifyPropertyChanged` for data binding.
 
@@ -368,12 +368,12 @@ The `GridView.ItemsSource` binds to this via `{x:Bind Items}`. Because it is an 
 
 | File                                         | Role                                   |
 |----------------------------------------------|-----------------------------------------|
-| `LaunchPad.Widget\LaunchPadWidget.xaml`       | XAML layout, resources, data templates   |
-| `LaunchPad.Widget\LaunchPadWidget.xaml.cs`    | Code-behind: loading, events, feedback   |
-| `LaunchPad.Widget\App.xaml`                   | Application theme (`RequestedTheme=Dark`)|
-| `LaunchPad.Widget\App.xaml.cs`                | Activation, App Service, lifecycle       |
-| `LaunchPad.Widget\Models\LaunchItem.cs`       | Tile data model with INotifyPropertyChanged |
-| `LaunchPad.Package\Package.appxmanifest`      | Widget registration, window sizing       |
+| `LaunchDeck.Widget\LaunchDeckWidget.xaml`       | XAML layout, resources, data templates   |
+| `LaunchDeck.Widget\LaunchDeckWidget.xaml.cs`    | Code-behind: loading, events, feedback   |
+| `LaunchDeck.Widget\App.xaml`                   | Application theme (`RequestedTheme=Dark`)|
+| `LaunchDeck.Widget\App.xaml.cs`                | Activation, App Service, lifecycle       |
+| `LaunchDeck.Widget\Models\LaunchItem.cs`       | Tile data model with INotifyPropertyChanged |
+| `LaunchDeck.Package\Package.appxmanifest`      | Widget registration, window sizing       |
 
 ## See Also
 

@@ -1,4 +1,4 @@
-# LaunchPad
+# LaunchDeck
 
 An Xbox Game Bar widget that launches apps, URLs, and Store apps from a configurable tile grid overlay.
 
@@ -13,7 +13,7 @@ An Xbox Game Bar widget that launches apps, URLs, and Store apps from a configur
 
 ## Architecture
 
-LaunchPad uses a two-process design to work around UWP sandbox restrictions:
+LaunchDeck uses a two-process design to work around UWP sandbox restrictions:
 
 - **Widget** (UWP) — the tile grid UI that runs inside Game Bar
 - **Companion** (.NET 10 Win32) — handles file I/O, process launching, icon extraction, and hosts the config editor
@@ -21,11 +21,11 @@ LaunchPad uses a two-process design to work around UWP sandbox restrictions:
 The two processes communicate over Windows App Service IPC, packaged together in a single MSIX via a Windows Application Packaging Project.
 
 ```
-LaunchPad.Widget/       # UWP XAML widget
-LaunchPad.Companion/    # .NET 10 companion (WPF editor, IPC handlers)
-LaunchPad.Shared/       # Shared library (config models, loader)
-LaunchPad.Tests/        # xUnit tests
-LaunchPad.Package/      # MSIX packaging and manifest
+LaunchDeck.Widget/       # UWP XAML widget
+LaunchDeck.Companion/    # .NET 10 companion (WPF editor, IPC handlers)
+LaunchDeck.Shared/       # Shared library (config models, loader)
+LaunchDeck.Tests/        # xUnit tests
+LaunchDeck.Package/      # MSIX packaging and manifest
 ```
 
 ## Requirements
@@ -38,12 +38,12 @@ LaunchPad.Package/      # MSIX packaging and manifest
 
 ```bash
 # Non-UWP projects
-dotnet build LaunchPad.Shared/LaunchPad.Shared.csproj
-dotnet build LaunchPad.Companion/LaunchPad.Companion.csproj
-dotnet test LaunchPad.Tests/
+dotnet build LaunchDeck.Shared/LaunchDeck.Shared.csproj
+dotnet build LaunchDeck.Companion/LaunchDeck.Companion.csproj
+dotnet test LaunchDeck.Tests/
 
 # Full solution (requires VS / MSBuild)
-msbuild LaunchPad.sln /p:Configuration=Debug /p:Platform=x64 /restore
+msbuild LaunchDeck.sln /p:Configuration=Debug /p:Platform=x64 /restore
 ```
 
 ## Deploy
@@ -52,21 +52,21 @@ msbuild LaunchPad.sln /p:Configuration=Debug /p:Platform=x64 /restore
 .\deploy.ps1
 ```
 
-Builds the full solution with MSBuild and registers the package via loose-file deployment (no signing needed). Requires Visual Studio with the UWP workload installed. After deploying, open Game Bar (Win+G) and enable the LaunchPad widget from the widget menu.
+Builds the full solution with MSBuild and registers the package via loose-file deployment (no signing needed). Requires Visual Studio with the UWP workload installed. After deploying, open Game Bar (Win+G) and enable the LaunchDeck widget from the widget menu.
 
 ## Uninstall
 
 ```powershell
 # Remove the registered package
-Get-AppxPackage *LaunchPad* | Remove-AppxPackage
+Get-AppxPackage *LaunchDeck* | Remove-AppxPackage
 
 # Remove config and cached icons
-Remove-Item "$env:LOCALAPPDATA\LaunchPad" -Recurse -Force
+Remove-Item "$env:LOCALAPPDATA\LaunchDeck" -Recurse -Force
 ```
 
 ## Configuration
 
-Items are stored in `%LOCALAPPDATA%\LaunchPad\config.json`. Use the built-in editor (gear button in the widget) to manage items, or edit the JSON directly:
+Items are stored in `%LOCALAPPDATA%\LaunchDeck\config.json`. Use the built-in editor (gear button in the widget) to manage items, or edit the JSON directly:
 
 ```json
 {

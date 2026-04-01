@@ -1,4 +1,4 @@
-# LaunchPad build + deploy script
+# LaunchDeck build + deploy script
 # Run from project root in PowerShell
 
 $ErrorActionPreference = 'Stop'
@@ -15,25 +15,25 @@ if (-not (Test-Path $msbuild)) {
 
 Write-Host "Using MSBuild: $msbuild" -ForegroundColor Cyan
 
-# Kill running LaunchPad processes
-$procs = Get-Process -Name 'LaunchPad.Companion', 'LaunchPad.Widget' -ErrorAction SilentlyContinue
+# Kill running LaunchDeck processes
+$procs = Get-Process -Name 'LaunchDeck.Companion', 'LaunchDeck.Widget' -ErrorAction SilentlyContinue
 if ($procs) {
-    Write-Host "Stopping running LaunchPad processes..." -ForegroundColor Yellow
+    Write-Host "Stopping running LaunchDeck processes..." -ForegroundColor Yellow
     $procs | Stop-Process -Force
     Start-Sleep -Seconds 1
 }
 
 # Build full solution (produces .msix)
 Write-Host "Building solution..." -ForegroundColor Cyan
-& $msbuild LaunchPad.sln -p:Configuration=Debug -p:Platform=x64 -restore -v:minimal
+& $msbuild LaunchDeck.sln -p:Configuration=Debug -p:Platform=x64 -restore -v:minimal
 if ($LASTEXITCODE -ne 0) {
     Write-Error "Build failed"
     exit 1
 }
 
 # Extract MSIX to layout directory for loose-file registration
-$msix = Join-Path $PSScriptRoot 'LaunchPad.Package\AppPackages\LaunchPad.Package_1.0.0.0_x64_Debug_Test\LaunchPad.Package_1.0.0.0_x64_Debug.msix'
-$layoutDir = Join-Path $PSScriptRoot 'LaunchPad.Package\bin\x64\Debug\AppX'
+$msix = Join-Path $PSScriptRoot 'LaunchDeck.Package\AppPackages\LaunchDeck.Package_1.0.0.0_x64_Debug_Test\LaunchDeck.Package_1.0.0.0_x64_Debug.msix'
+$layoutDir = Join-Path $PSScriptRoot 'LaunchDeck.Package\bin\x64\Debug\AppX'
 
 if (-not (Test-Path $msix)) {
     Write-Error "MSIX not found at $msix"
@@ -49,7 +49,7 @@ Add-Type -AssemblyName System.IO.Compression.FileSystem
 [System.IO.Compression.ZipFile]::ExtractToDirectory($msix, $layoutDir)
 
 # Remove existing registration, then re-register
-$existing = Get-AppxPackage -Name 'LaunchPad' -ErrorAction SilentlyContinue
+$existing = Get-AppxPackage -Name 'LaunchDeck' -ErrorAction SilentlyContinue
 if ($existing) {
     Write-Host "Removing existing package..." -ForegroundColor Yellow
     Remove-AppxPackage $existing.PackageFullName

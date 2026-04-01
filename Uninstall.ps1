@@ -1,7 +1,7 @@
 #Requires -RunAsAdministrator
 <#
 .SYNOPSIS
-    Uninstalls LaunchPad Game Bar widget and cleans up all data.
+    Uninstalls LaunchDeck Game Bar widget and cleans up all data.
 .DESCRIPTION
     Removes the MSIX package, developer certificate, config file,
     and cached icons. Requires administrator privileges.
@@ -9,12 +9,12 @@
 
 $ErrorActionPreference = 'SilentlyContinue'
 
-Write-Host "Removing LaunchPad package..." -ForegroundColor Cyan
-Get-AppxPackage *LaunchPad* | Remove-AppxPackage
+Write-Host "Removing LaunchDeck package..." -ForegroundColor Cyan
+Get-AppxPackage *LaunchDeck* | Remove-AppxPackage
 Write-Host "Package removed." -ForegroundColor Green
 
 Write-Host "Removing developer certificate..." -ForegroundColor Cyan
-$certs = Get-ChildItem "Cert:\LocalMachine\TrustedPeople" | Where-Object { $_.Subject -eq "CN=Developer" -and $_.FriendlyName -like "*LaunchPad*" }
+$certs = Get-ChildItem "Cert:\LocalMachine\TrustedPeople" | Where-Object { $_.Subject -eq "CN=Developer" -and $_.FriendlyName -like "*LaunchDeck*" }
 if ($certs) {
     $certs | Remove-Item
     Write-Host "Certificate removed." -ForegroundColor Green
@@ -34,8 +34,8 @@ if ($certs) {
 }
 
 Write-Host "Removing config and cached data..." -ForegroundColor Cyan
-Remove-Item "$env:LOCALAPPDATA\LaunchPad" -Recurse -Force -ErrorAction SilentlyContinue
+Remove-Item "$env:LOCALAPPDATA\LaunchDeck" -Recurse -Force -ErrorAction SilentlyContinue
 Write-Host "Data removed." -ForegroundColor Green
 
 Write-Host ""
-Write-Host "LaunchPad fully uninstalled." -ForegroundColor Green
+Write-Host "LaunchDeck fully uninstalled." -ForegroundColor Green

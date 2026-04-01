@@ -1,4 +1,4 @@
-# LaunchPad - Xbox Game Bar Widget
+# LaunchDeck - Xbox Game Bar Widget
 
 @AGENTS.md
 
@@ -9,11 +9,11 @@ Game Bar widget that launches apps and URLs from a configurable grid overlay. UW
 ## Project Structure
 
 ```
-LaunchPad.Widget/       # UWP XAML widget (runs inside Game Bar)
-LaunchPad.Companion/    # .NET 10 Win32 process (IPC handler, WPF editor, icon extraction)
-LaunchPad.Shared/       # .NET Standard 2.0 library (ConfigLoader, config models)
-LaunchPad.Tests/        # xUnit tests (references Shared + Companion)
-LaunchPad.Package/      # WAPPROJ — MSIX packaging, manifest, deployment
+LaunchDeck.Widget/       # UWP XAML widget (runs inside Game Bar)
+LaunchDeck.Companion/    # .NET 10 Win32 process (IPC handler, WPF editor, icon extraction)
+LaunchDeck.Shared/       # .NET Standard 2.0 library (ConfigLoader, config models)
+LaunchDeck.Tests/        # xUnit tests (references Shared + Companion)
+LaunchDeck.Package/      # WAPPROJ — MSIX packaging, manifest, deployment
 docs/                   # Architecture, IPC, Config, UI, Deployment, Testing docs
 ```
 
@@ -32,7 +32,7 @@ Always pass `model: "opus"` on every Agent tool call. Never use sonnet or haiku 
 
 ## Testing Standards
 
-- Run `dotnet test LaunchPad.Tests/` after any code change and before committing
+- Run `dotnet test LaunchDeck.Tests/` after any code change and before committing
 - Every test must catch a real bug — if you can't name what would break, delete the test
 - No false-confidence tests (tests that pass even if the code is broken)
 - Extract logic from WPF/UWP code-behind into testable classes (e.g., `EditorModel`)
@@ -71,16 +71,16 @@ When changing IPC actions, UI behavior, or config schema, update the correspondi
 
 ```bash
 # Non-UWP projects (shared, companion, tests)
-dotnet build LaunchPad.Shared/LaunchPad.Shared.csproj
-dotnet build LaunchPad.Companion/LaunchPad.Companion.csproj
-dotnet test LaunchPad.Tests/
+dotnet build LaunchDeck.Shared/LaunchDeck.Shared.csproj
+dotnet build LaunchDeck.Companion/LaunchDeck.Companion.csproj
+dotnet test LaunchDeck.Tests/
 
 # Run a single test class or method
-dotnet test LaunchPad.Tests/ --filter EditorModelTests
-dotnet test LaunchPad.Tests/ --filter "EditorModelTests.AddExe_AppendsItemAndSelectsIt"
+dotnet test LaunchDeck.Tests/ --filter EditorModelTests
+dotnet test LaunchDeck.Tests/ --filter "EditorModelTests.AddExe_AppendsItemAndSelectsIt"
 
 # Full solution (requires VS / MSBuild)
-msbuild LaunchPad.sln /p:Configuration=Debug /p:Platform=x64 /restore
+msbuild LaunchDeck.sln /p:Configuration=Debug /p:Platform=x64 /restore
 ```
 
 ## Deploy
@@ -89,4 +89,4 @@ msbuild LaunchPad.sln /p:Configuration=Debug /p:Platform=x64 /restore
 powershell.exe -ExecutionPolicy Bypass -File deploy.ps1
 ```
 
-The script kills running LaunchPad processes, builds with MSBuild, and registers the package. After deploying, open Game Bar (Win+G) to use the widget.
+The script kills running LaunchDeck processes, builds with MSBuild, and registers the package. After deploying, open Game Bar (Win+G) to use the widget.

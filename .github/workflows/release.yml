@@ -24,7 +24,7 @@ jobs:
         uses: microsoft/setup-msbuild@v2
 
       - name: Run tests
-        run: dotnet test LaunchPad.Tests/ --configuration Release --verbosity normal
+        run: dotnet test LaunchDeck.Tests/ --configuration Release --verbosity normal
 
       - name: Create signing certificate
         run: |
@@ -32,33 +32,33 @@ jobs:
             -Type Custom `
             -Subject "CN=Developer" `
             -KeyUsage DigitalSignature `
-            -FriendlyName "LaunchPad Dev Certificate" `
+            -FriendlyName "LaunchDeck Dev Certificate" `
             -CertStoreLocation "Cert:\CurrentUser\My" `
             -TextExtension @("2.5.29.37={text}1.3.6.1.5.5.7.3.3", "2.5.29.19={text}")
-          $password = ConvertTo-SecureString -String "LaunchPadBuild" -Force -AsPlainText
+          $password = ConvertTo-SecureString -String "LaunchDeckBuild" -Force -AsPlainText
           Export-PfxCertificate -cert "Cert:\CurrentUser\My\$($cert.Thumbprint)" `
-            -FilePath "$env:GITHUB_WORKSPACE\LaunchPad.Package\LaunchPad_Dev.pfx" `
+            -FilePath "$env:GITHUB_WORKSPACE\LaunchDeck.Package\LaunchDeck_Dev.pfx" `
             -Password $password
           Export-Certificate -Cert "Cert:\CurrentUser\My\$($cert.Thumbprint)" `
-            -FilePath "$env:GITHUB_WORKSPACE\LaunchPad_Dev.cer"
+            -FilePath "$env:GITHUB_WORKSPACE\LaunchDeck_Dev.cer"
           echo "CERT_THUMBPRINT=$($cert.Thumbprint)" >> $env:GITHUB_ENV
         shell: pwsh
 
       - name: Build signed MSIX
         run: >
-          msbuild LaunchPad.sln
+          msbuild LaunchDeck.sln
           /p:Configuration=Release
           /p:Platform=x64
           /p:AppxBundle=Never
           /p:AppxPackageSigningEnabled=true
           /p:PackageCertificateThumbprint=${{ env.CERT_THUMBPRINT }}
-          /p:PackageCertificatePassword=LaunchPadBuild
-          /p:PackageCertificateKeyFile=${{ github.workspace }}\LaunchPad.Package\LaunchPad_Dev.pfx
+          /p:PackageCertificatePassword=LaunchDeckBuild
+          /p:PackageCertificateKeyFile=${{ github.workspace }}\LaunchDeck.Package\LaunchDeck_Dev.pfx
           /restore
 
       - name: Find MSIX
         run: |
-          $msix = Get-ChildItem -Path "LaunchPad.Package\AppPackages" -Recurse -Filter "*.msix" | Select-Object -First 1
+          $msix = Get-ChildItem -Path "LaunchDeck.Package\AppPackages" -Recurse -Filter "*.msix" | Select-Object -First 1
           if (-not $msix) { Write-Error "No MSIX found"; exit 1 }
           Write-Host "Found: $($msix.FullName)"
           echo "MSIX_PATH=$($msix.FullName)" >> $env:GITHUB_ENV
@@ -69,10 +69,10 @@ jobs:
         run: |
           New-Item -ItemType Directory -Path "release" -Force
           Copy-Item "${{ env.MSIX_PATH }}" "release\"
-          Copy-Item "LaunchPad_Dev.cer" "release\"
+          Copy-Item "LaunchDeck_Dev.cer" "release\"
           Copy-Item "Install.ps1" "release\"
           Copy-Item "Uninstall.ps1" "release\"
-          Compress-Archive -Path "release\*" -DestinationPath "LaunchPad-${{ github.ref_name }}.zip"
+          Compress-Archive -Path "release\*" -DestinationPath "LaunchDeck-${{ github.ref_name }}.zip"
         shell: pwsh
 
       - name: Create GitHub Release
@@ -82,9 +82,9 @@ jobs:
           body: |
             ## Installation
 
-            1. Download `LaunchPad-${{ github.ref_name }}.zip` and extract it
+            1. Download `LaunchDeck-${{ github.ref_name }}.zip` and extract it
             2. Right-click `Install.ps1` → **Run with PowerShell** (as Administrator)
-            3. Open Game Bar (**Win+G**) and enable the LaunchPad widget from the widget menu
+            3. Open Game Bar (**Win+G**) and enable the LaunchDeck widget from the widget menu
 
             The install script installs a developer certificate and the MSIX package. The certificate is only needed once — future updates just need the MSIX.
 
@@ -97,4 +97,4 @@ jobs:
             - Windows 10 19041+ with Xbox Game Bar
             - Administrator access (for certificate install/removal)
           files: |
-            LaunchPad-${{ github.ref_name }}.zip
+            LaunchDeck-${{ github.ref_name }}.zip

@@ -1,17 +1,17 @@
-# LaunchPad Configuration Reference
+# LaunchDeck Configuration Reference
 
 ## Config File Location
 
 The config file lives at:
 
 ```
-%LOCALAPPDATA%\LaunchPad\config.json
+%LOCALAPPDATA%\LaunchDeck\config.json
 ```
 
 Typical resolved path:
 
 ```
-C:\Users\<username>\AppData\Local\LaunchPad\config.json
+C:\Users\<username>\AppData\Local\LaunchDeck\config.json
 ```
 
 ### UWP Virtualized Path Problem
@@ -24,16 +24,16 @@ C:\Users\<username>\AppData\Local\Packages\<PackageFamilyName>\LocalState
 
 If the widget called `Environment.GetFolderPath(SpecialFolder.LocalApplicationData)` directly, it would get the virtualized path, and the companion process would resolve a different location. Both would think they are using "local app data" but would point to different directories.
 
-`ConfigLoader.GetDefaultConfigPath()` fixes this by detecting the `\Packages\` segment in the path and stripping everything from that point onward, so both the widget and companion resolve to the same real `%LOCALAPPDATA%\LaunchPad\config.json`.
+`ConfigLoader.GetDefaultConfigPath()` fixes this by detecting the `\Packages\` segment in the path and stripping everything from that point onward, so both the widget and companion resolve to the same real `%LOCALAPPDATA%\LaunchDeck\config.json`.
 
-Relevant code in `LaunchPad.Shared/ConfigModels.cs`:
+Relevant code in `LaunchDeck.Shared/ConfigModels.cs`:
 
 ```csharp
 var packagesIdx = localAppData.IndexOf(@"\Packages\", StringComparison.OrdinalIgnoreCase);
 if (packagesIdx >= 0)
     localAppData = localAppData.Substring(0, packagesIdx);
 
-return Path.Combine(localAppData, "LaunchPad", "config.json");
+return Path.Combine(localAppData, "LaunchDeck", "config.json");
 ```
 
 If the directory does not exist when saving, `ConfigLoader.Save` creates it automatically.
@@ -165,7 +165,7 @@ Icons are resolved per-item when the widget loads. The resolution follows a chai
 Cached icons are stored at:
 
 ```
-%LOCALAPPDATA%\LaunchPad\icons\
+%LOCALAPPDATA%\LaunchDeck\icons\
 ```
 
 Note: Unlike the config path, the icon cache directory is resolved by the companion process (a desktop .NET 8 app, not UWP), so `Environment.GetFolderPath` returns the real `%LOCALAPPDATA%` without virtualization issues.
@@ -193,7 +193,7 @@ The widget (UWP) cannot read arbitrary filesystem paths due to the UWP sandbox. 
 
 ### Load Sequence
 
-1. **Widget starts** -- `LaunchPadWidget.OnLoaded` fires and launches the companion via `FullTrustProcessLauncher.LaunchFullTrustProcessForCurrentAppAsync()`. A 500ms delay follows to let the companion connect its App Service.
+1. **Widget starts** -- `LaunchDeckWidget.OnLoaded` fires and launches the companion via `FullTrustProcessLauncher.LaunchFullTrustProcessForCurrentAppAsync()`. A 500ms delay follows to let the companion connect its App Service.
 
 2. **Widget requests config** -- `CompanionClient.LoadConfigAsync()` sends a `ValueSet` message:
    ```
@@ -209,7 +209,7 @@ The widget (UWP) cannot read arbitrary filesystem paths due to the UWP sandbox. 
    - On file not found: `status` = `"filenotfound"`, no `json` key.
    - On parse error: `status` = `"parseerror"`, `error` = exception message.
 
-4. **Widget processes response** -- `CompanionClient` deserializes the JSON back into a `LaunchPadConfig` and returns a tuple of `(ConfigLoadStatus, LaunchPadConfig?, string?, string?)`.
+4. **Widget processes response** -- `CompanionClient` deserializes the JSON back into a `LaunchDeckConfig` and returns a tuple of `(ConfigLoadStatus, LaunchDeckConfig?, string?, string?)`.
 
 5. **Widget populates grid** -- `LoadConfigAsync` maps each `LaunchItemConfig` into a `LaunchItem` view model, adds it to the `ObservableCollection<LaunchItem>`, then kicks off `LoadIconsAsync` for icon resolution.
 
@@ -263,7 +263,7 @@ Users add or edit items by opening the WPF config editor from the widget. Clicki
 
 | Field          | Type               | Description |
 |----------------|--------------------|-------------|
-| `Config`       | `LaunchPadConfig?` | The deserialized config object. Null on failure. |
+| `Config`       | `LaunchDeckConfig?` | The deserialized config object. Null on failure. |
 | `Status`       | `ConfigLoadStatus` | Enum indicating the outcome. |
 | `ErrorMessage` | `string?`          | Populated only on `ParseError`. Contains the `JsonException.Message`. |
 
@@ -336,12 +336,12 @@ Note: `ConfigLoader.Load` uses `PropertyNameCaseInsensitive = true`, so field na
 
 | File | Role |
 |------|------|
-| `LaunchPad.Shared/ConfigModels.cs` | `LaunchPadConfig`, `LaunchItemConfig`, `LaunchItemType`, `ConfigLoadResult`, `ConfigLoadStatus`, `ConfigLoader` |
-| `LaunchPad.Companion/Program.cs` | IPC dispatcher: `HandleLoadConfig`, `HandleOpenEditor` |
-| `LaunchPad.Companion/IconExtractor.cs` | EXE icon extraction, favicon fetching, cache management |
-| `LaunchPad.Companion/ExePicker.cs` | Win32 file picker dialog, display name extraction, config append |
-| `LaunchPad.Widget/Services/CompanionClient.cs` | Widget-side IPC client: `LoadConfigAsync`, `ExtractIconAsync`, `FetchFaviconAsync`, `OpenEditorAsync` |
-| `LaunchPad.Widget/LaunchPadWidget.xaml.cs` | Widget UI: `LoadConfigAsync`, `LoadIconsAsync`, `OnEditClick` |
+| `LaunchDeck.Shared/ConfigModels.cs` | `LaunchDeckConfig`, `LaunchItemConfig`, `LaunchItemType`, `ConfigLoadResult`, `ConfigLoadStatus`, `ConfigLoader` |
+| `LaunchDeck.Companion/Program.cs` | IPC dispatcher: `HandleLoadConfig`, `HandleOpenEditor` |
+| `LaunchDeck.Companion/IconExtractor.cs` | EXE icon extraction, favicon fetching, cache management |
+| `LaunchDeck.Companion/ExePicker.cs` | Win32 file picker dialog, display name extraction, config append |
+| `LaunchDeck.Widget/Services/CompanionClient.cs` | Widget-side IPC client: `LoadConfigAsync`, `ExtractIconAsync`, `FetchFaviconAsync`, `OpenEditorAsync` |
+| `LaunchDeck.Widget/LaunchDeckWidget.xaml.cs` | Widget UI: `LoadConfigAsync`, `LoadIconsAsync`, `OnEditClick` |
 | `config.sample.json` | Example config file with all three item types |
 
 ## See Also

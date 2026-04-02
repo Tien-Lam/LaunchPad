@@ -3,6 +3,7 @@ obj/
 .vs/
 *.user
 AppPackages/
+BundleArtifacts/
 *.assets.cache
 UpgradeLog.htm
 .superpowers/

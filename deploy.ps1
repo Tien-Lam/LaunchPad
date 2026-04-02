@@ -31,14 +31,18 @@ if ($LASTEXITCODE -ne 0) {
     exit 1
 }
 
-# Extract MSIX to layout directory for loose-file registration
-$msix = Join-Path $PSScriptRoot 'LaunchDeck.Package\AppPackages\LaunchDeck.Package_1.0.0.0_x64_Debug_Test\LaunchDeck.Package_1.0.0.0_x64_Debug.msix'
+# Find MSIX or MSIXBUNDLE in output
+$pkg = Get-ChildItem -Path "$PSScriptRoot\LaunchDeck.Package\AppPackages" -Recurse -Include '*.msix','*.msixbundle' |
+    Where-Object { $_.Name -match 'Debug' } |
+    Select-Object -First 1
 $layoutDir = Join-Path $PSScriptRoot 'LaunchDeck.Package\bin\x64\Debug\AppX'
 
-if (-not (Test-Path $msix)) {
-    Write-Error "MSIX not found at $msix"
+if (-not $pkg) {
+    Write-Error "No MSIX/MSIXBUNDLE found in LaunchDeck.Package\AppPackages"
     exit 1
 }
+
+Write-Host "Found package: $($pkg.Name)" -ForegroundColor Cyan
 
 Write-Host "Extracting package layout..." -ForegroundColor Cyan
 if (Test-Path $layoutDir) {
@@ -46,7 +50,19 @@ if (Test-Path $layoutDir) {
 }
 New-Item $layoutDir -ItemType Directory | Out-Null
 Add-Type -AssemblyName System.IO.Compression.FileSystem
-[System.IO.Compression.ZipFile]::ExtractToDirectory($msix, $layoutDir)
+
+# Bundles contain an inner .msix — extract the bundle first, then the msix
+if ($pkg.Extension -eq '.msixbundle') {
+    $bundleDir = Join-Path $PSScriptRoot 'LaunchDeck.Package\bin\x64\Debug\Bundle'
+    if (Test-Path $bundleDir) { Remove-Item $bundleDir -Recurse -Force }
+    New-Item $bundleDir -ItemType Directory | Out-Null
+    [System.IO.Compression.ZipFile]::ExtractToDirectory($pkg.FullName, $bundleDir)
+    $innerMsix = Get-ChildItem $bundleDir -Filter '*.msix' | Select-Object -First 1
+    [System.IO.Compression.ZipFile]::ExtractToDirectory($innerMsix.FullName, $layoutDir)
+    Remove-Item $bundleDir -Recurse -Force
+} else {
+    [System.IO.Compression.ZipFile]::ExtractToDirectory($pkg.FullName, $layoutDir)
+}
 
 # Remove existing registration, then re-register
 $existing = Get-AppxPackage -Name 'LaunchDeck' -ErrorAction SilentlyContinue

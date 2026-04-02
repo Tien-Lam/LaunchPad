@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Package xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
          xmlns:mp="http://schemas.microsoft.com/appx/2014/phone/manifest"
          xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
@@ -7,14 +7,14 @@
          xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
          IgnorableNamespaces="uap uap3 mp desktop rescap">
 
-  <Identity Name="LaunchDeck" Publisher="CN=Developer" Version="1.0.0.0" />
+  <Identity Name="34667TienLongLam.LaunchDeck" Publisher="CN=E37AAF35-F870-4E74-8486-74BED9927C48" Version="1.0.0.0" />
 
   <mp:PhoneIdentity PhoneProductId="00000000-0000-0000-0000-000000000000"
                      PhonePublisherId="00000000-0000-0000-0000-000000000000" />
 
   <Properties>
     <DisplayName>LaunchDeck</DisplayName>
-    <PublisherDisplayName>Developer</PublisherDisplayName>
+    <PublisherDisplayName>Tien Lam</PublisherDisplayName>
     <Logo>Images\StoreLogo.png</Logo>
   </Properties>
 

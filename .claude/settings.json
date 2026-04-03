@@ -37,9 +37,8 @@
       {
         "hooks": [
           {
-            "type": "agent",
-            "prompt": "Review the changes from this conversation. Check:\n1. Were code files (.cs, .xaml, .ps1) modified without updating docs (docs/*.md, README.md)?\n2. Were new methods or logic branches added without tests in LaunchDeck.Tests/?\n3. Were methods, classes, or imports left unused after refactoring? Grep the codebase to verify.\n4. Were tests run after the last code change before the last commit?\n\nRespond with {\"ok\": true} if everything is fine, or {\"ok\": false, \"reason\": \"description\"} if issues were found.",
-            "timeout": 120
+            "type": "prompt",
+            "prompt": "You are a JSON-only reviewer. Output EXACTLY one JSON object, no markdown fences, no commentary.\n\nCheck: (1) code files changed without doc updates, (2) new methods without tests, (3) tests not run after code changes.\n\nIf all good: {\"ok\":true}\nIf issues: {\"ok\":false,\"reason\":\"brief description\"}"
           }
         ]
       }

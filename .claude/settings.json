@@ -37,8 +37,9 @@
       {
         "hooks": [
           {
-            "type": "prompt",
-            "prompt": "Review what Claude did in this conversation turn. Check:\n\n1. Docs: Were code files (.cs, .xaml, .ps1) modified without updating corresponding docs (docs/*.md, README.md)?\n2. Tests: Were new methods or logic branches added without tests?\n3. Dead code: Were methods, classes, or imports left unused after refactoring?\n4. Build: Were tests actually run after the last code change and before the last commit?\n\nYou MUST respond with ONLY valid JSON, no other text. If issues were found: {\"ok\": false, \"reason\": \"description of what was missed\"}\nIf everything looks good: {\"ok\": true}"
+            "type": "agent",
+            "prompt": "Review the changes from this conversation. Check:\n1. Were code files (.cs, .xaml, .ps1) modified without updating docs (docs/*.md, README.md)?\n2. Were new methods or logic branches added without tests in LaunchDeck.Tests/?\n3. Were methods, classes, or imports left unused after refactoring? Grep the codebase to verify.\n4. Were tests run after the last code change before the last commit?\n\nRespond with {\"ok\": true} if everything is fine, or {\"ok\": false, \"reason\": \"description\"} if issues were found.",
+            "timeout": 120
           }
         ]
       }

@@ -9,6 +9,13 @@
 
 $ErrorActionPreference = 'SilentlyContinue'
 
+$procs = Get-Process -Name 'LaunchDeck.Companion', 'LaunchDeck.Widget' -ErrorAction SilentlyContinue
+if ($procs) {
+    Write-Host "Stopping running LaunchDeck processes..." -ForegroundColor Yellow
+    $procs | Stop-Process -Force
+    Start-Sleep -Seconds 1
+}
+
 Write-Host "Removing LaunchDeck package..." -ForegroundColor Cyan
 Get-AppxPackage *LaunchDeck* | Remove-AppxPackage
 Write-Host "Package removed." -ForegroundColor Green

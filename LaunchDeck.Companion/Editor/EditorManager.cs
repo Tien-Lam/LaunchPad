@@ -6,58 +6,60 @@ namespace LaunchDeck.Companion;
 
 public static class EditorManager
 {
-    private static Thread? _editorThread;
+    private static Thread? _staThread;
+    private static System.Windows.Threading.Dispatcher? _dispatcher;
     private static Window? _editorWindow;
     private static readonly object Lock = new();
 
-    public static bool IsEditorOpen
+    private static void EnsureStaThread()
     {
-        get
+        if (_staThread != null && _staThread.IsAlive && _dispatcher != null)
+            return;
+
+        var ready = new ManualResetEventSlim();
+        _staThread = new Thread(() =>
         {
-            lock (Lock)
-                return _editorThread != null && _editorThread.IsAlive;
-        }
+            if (Application.Current == null)
+            {
+                var app = new Application { ShutdownMode = ShutdownMode.OnExplicitShutdown };
+#pragma warning disable WPF0001
+                app.ThemeMode = ThemeMode.Dark;
+#pragma warning restore WPF0001
+            }
+            _dispatcher = System.Windows.Threading.Dispatcher.CurrentDispatcher;
+            ready.Set();
+            System.Windows.Threading.Dispatcher.Run();
+        });
+        _staThread.SetApartmentState(ApartmentState.STA);
+        _staThread.IsBackground = true;
+        _staThread.Start();
+        ready.Wait();
     }
 
     public static void OpenEditor(string configPath, Action? onSaved)
     {
         lock (Lock)
         {
-            if (_editorThread != null && _editorThread.IsAlive)
-            {
-                _editorWindow?.Dispatcher.Invoke(() => _editorWindow.Activate());
-                return;
-            }
+            EnsureStaThread();
 
-            _editorThread = new Thread(() =>
+            _dispatcher!.Invoke(() =>
             {
-                // WPF Application is needed for theme resource resolution
-                // ThemeMode must be set on Application (not Window) to avoid
-                // crashes when popup-based controls dismiss on a separate STA thread
-                if (Application.Current == null)
+                if (_editorWindow != null)
                 {
-                    var app = new Application { ShutdownMode = ShutdownMode.OnExplicitShutdown };
-#pragma warning disable WPF0001
-                    app.ThemeMode = ThemeMode.Dark;
-#pragma warning restore WPF0001
+                    Log.Write("EditorManager: editor already open, no-op");
+                    return;
                 }
 
+                Log.Write("EditorManager: creating new window");
                 _editorWindow = new Editor.EditorWindow(configPath, onSaved);
                 _editorWindow.Closed += (_, _) =>
                 {
-                    _editorWindow.Dispatcher.InvokeShutdown();
+                    Log.Write("EditorManager: window closed");
                     lock (Lock)
-                    {
                         _editorWindow = null;
-                        _editorThread = null;
-                    }
                 };
                 _editorWindow.Show();
-                System.Windows.Threading.Dispatcher.Run();
             });
-            _editorThread.SetApartmentState(ApartmentState.STA);
-            _editorThread.IsBackground = true;
-            _editorThread.Start();
         }
     }
 }

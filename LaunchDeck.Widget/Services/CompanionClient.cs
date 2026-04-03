@@ -1,5 +1,4 @@
 using System;
-using System.Text.Json;
 using System.Threading.Tasks;
 using LaunchDeck.Shared;
 using Windows.ApplicationModel.AppService;
@@ -49,7 +48,7 @@ public static class CompanionClient
             var json = msg["json"] as string ?? "";
             try
             {
-                var config = ParseConfig(json);
+                var config = ConfigLoader.ParseJson(json);
                 return (ConfigLoadStatus.Success, config, responsePath, null);
             }
             catch (Exception ex)
@@ -181,43 +180,6 @@ public static class CompanionClient
         if (response.Status != AppServiceResponseStatus.Success) return false;
 
         return response.Message["status"] as string == "ok";
-    }
-
-    private static LaunchDeckConfig ParseConfig(string json)
-    {
-        var config = new LaunchDeckConfig();
-        using var doc = JsonDocument.Parse(json);
-        var root = doc.RootElement;
-
-        if ((root.TryGetProperty("items", out var itemsEl) ||
-             root.TryGetProperty("Items", out itemsEl)) &&
-            itemsEl.ValueKind == JsonValueKind.Array)
-        {
-            foreach (var itemEl in itemsEl.EnumerateArray())
-            {
-                var item = new LaunchItemConfig();
-
-                if (itemEl.TryGetProperty("name", out var v) || itemEl.TryGetProperty("Name", out v))
-                    item.Name = v.GetString() ?? "";
-                if (itemEl.TryGetProperty("path", out v) || itemEl.TryGetProperty("Path", out v))
-                    item.Path = v.GetString() ?? "";
-                if (itemEl.TryGetProperty("args", out v) || itemEl.TryGetProperty("Args", out v))
-                    item.Args = v.ValueKind == JsonValueKind.Null ? null : v.GetString();
-                if (itemEl.TryGetProperty("icon", out v) || itemEl.TryGetProperty("Icon", out v))
-                    item.Icon = v.ValueKind == JsonValueKind.Null ? null : v.GetString();
-
-                if (itemEl.TryGetProperty("type", out v) || itemEl.TryGetProperty("Type", out v))
-                {
-                    var typeStr = v.GetString() ?? "";
-                    if (Enum.TryParse<LaunchItemType>(typeStr, true, out var parsed))
-                        item.Type = parsed;
-                }
-
-                config.Items.Add(item);
-            }
-        }
-
-        return config;
     }
 
     public static async void OnCompanionMessage(AppServiceConnection sender, AppServiceRequestReceivedEventArgs args)

@@ -34,10 +34,12 @@ if ($LASTEXITCODE -ne 0) {
 # Find MSIX in output (prefer .msix over .msixbundle for loose-file registration)
 $pkg = Get-ChildItem -Path "$PSScriptRoot\LaunchDeck.Package\AppPackages" -Recurse -Include '*.msix' |
     Where-Object { $_.Name -match 'Debug' -and $_.Extension -eq '.msix' } |
+    Sort-Object LastWriteTime -Descending |
     Select-Object -First 1
 if (-not $pkg) {
     $pkg = Get-ChildItem -Path "$PSScriptRoot\LaunchDeck.Package\AppPackages" -Recurse -Include '*.msixbundle' |
         Where-Object { $_.Name -match 'Debug' } |
+        Sort-Object LastWriteTime -Descending |
         Select-Object -First 1
 }
 $layoutDir = Join-Path $PSScriptRoot 'LaunchDeck.Package\bin\x64\Debug\AppX'

@@ -7,7 +7,7 @@
          xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
          IgnorableNamespaces="uap uap3 mp desktop rescap">
 
-  <Identity Name="34667TienLongLam.LaunchDeck" Publisher="CN=E37AAF35-F870-4E74-8486-74BED9927C48" Version="1.0.2.0" />
+  <Identity Name="34667TienLongLam.LaunchDeck" Publisher="CN=E37AAF35-F870-4E74-8486-74BED9927C48" Version="1.0.3.0" />
 
   <mp:PhoneIdentity PhoneProductId="00000000-0000-0000-0000-000000000000"
                      PhonePublisherId="00000000-0000-0000-0000-000000000000" />

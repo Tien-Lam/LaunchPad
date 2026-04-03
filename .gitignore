@@ -4,6 +4,8 @@ obj/
 *.user
 AppPackages/
 BundleArtifacts/
+*.cer
+*.pfx
 *.assets.cache
 UpgradeLog.htm
 .superpowers/

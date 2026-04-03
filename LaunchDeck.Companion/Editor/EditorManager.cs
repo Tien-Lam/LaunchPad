@@ -51,7 +51,10 @@ public static class EditorManager
         {
             if (_editorWindow != null)
             {
-                Log.Write("EditorManager: editor already open, no-op");
+                Log.Write("EditorManager: editor already open, activating");
+                if (_editorWindow.WindowState == WindowState.Minimized)
+                    _editorWindow.WindowState = WindowState.Normal;
+                _editorWindow.Activate();
                 return;
             }
 

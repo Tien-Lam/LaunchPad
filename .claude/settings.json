@@ -14,7 +14,7 @@
           {
             "type": "agent",
             "if": "Bash(git commit*)",
-            "prompt": "Review the staged git diff for this commit. Check for: (1) bugs, logic errors, or edge cases, (2) security issues (injection, secrets, unsafe input handling), (3) unnecessary complexity that could be simplified, (4) unused imports or dead code. If you find issues, respond with a clear description. If the code looks good, respond with nothing.",
+            "prompt": "Run `git diff --cached` to see the staged changes for this commit. Review them for:\n\n1. **Bugs**: logic errors, off-by-one, null derefs, race conditions, edge cases\n2. **Dead code**: unused imports, unreachable branches, methods no longer called anywhere (grep the codebase to verify)\n3. **Security**: injection, secrets, unsafe input handling\n4. **Missing tests**: new public/internal methods or logic branches that have no test coverage — check LaunchDeck.Tests/ for corresponding tests\n5. **Missing docs**: if IPC actions, config schema, UI behavior, or deployment changed, check that docs/*.md was also updated in this commit\n6. **Complexity**: code that could be simplified without losing functionality\n\nGrep the codebase to verify dead code claims. Don't guess — check.\n\nIf you find issues, respond with a clear description. If everything looks good, respond with nothing.",
             "statusMessage": "Code review..."
           }
         ]
@@ -38,7 +38,7 @@
         "hooks": [
           {
             "type": "prompt",
-            "prompt": "Review what Claude did in this conversation. Check: (1) Were code files (.cs, .xaml) modified without updating corresponding docs (docs/*.md, README.md)? (2) Were tests run after code changes? (3) Were new testable functions added without tests? (4) Could any recently written code be simplified for clarity or efficiency? If anything was missed or can be improved, respond with a brief description. If everything looks good, respond with nothing."
+            "prompt": "Review what Claude did in this conversation turn. Check:\n\n1. **Docs**: Were code files (.cs, .xaml, .ps1) modified without updating corresponding docs (docs/*.md, README.md)? Specifically: IPC changes → docs/IPC.md, config changes → docs/CONFIG.md, UI changes → docs/UI.md, deploy changes → docs/DEPLOYMENT.md, test changes → docs/TESTING.md.\n2. **Tests**: Were new methods or logic branches added without tests? Check if LaunchDeck.Tests/ has coverage for new code.\n3. **Dead code**: Were methods, classes, or imports left unused after refactoring? This is common when moving code between files.\n4. **Build**: Were tests actually run after the last code change and before the last commit?\n\nIf anything was missed, respond with a specific, actionable description (file names, method names). If everything looks good, respond with nothing."
           }
         ]
       }

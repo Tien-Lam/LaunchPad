@@ -18,11 +18,11 @@ jobs:
         with:
           dotnet-version: '10.0.x'
 
-      - name: Build Shared
-        run: dotnet build LaunchDeck.Shared/LaunchDeck.Shared.csproj --configuration Release
+      - name: Build
+        run: |
+          dotnet build LaunchDeck.Shared/LaunchDeck.Shared.csproj --configuration Release -warnaserror
+          dotnet build LaunchDeck.Companion/LaunchDeck.Companion.csproj --configuration Release -warnaserror
+          dotnet build LaunchDeck.Tests/LaunchDeck.Tests.csproj --configuration Release -warnaserror
 
-      - name: Build Companion
-        run: dotnet build LaunchDeck.Companion/LaunchDeck.Companion.csproj --configuration Release
-
-      - name: Run Tests
-        run: dotnet test LaunchDeck.Tests/ --configuration Release --verbosity normal
+      - name: Test
+        run: dotnet test LaunchDeck.Tests/ --configuration Release --no-build --verbosity normal

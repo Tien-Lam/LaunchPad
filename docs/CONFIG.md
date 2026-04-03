@@ -248,9 +248,9 @@ Users add or edit items by opening the WPF config editor from the widget. Clicki
    { "action": "open-editor", "configPath": "<resolved path>" }
    ```
 
-3. **Companion opens WPF editor** -- The companion launches `ConfigEditorWindow`, loading the current config. If the editor is already open, the existing window is focused instead.
+3. **Companion opens WPF editor** -- The companion launches `EditorWindow` on a persistent STA thread, loading the current config. If the editor is already open, the existing window is focused instead.
 
-4. **User adds/edits items** -- The editor provides a UI for adding, removing, and editing launch items (EXE, URL, Store).
+4. **User adds/edits items** -- The editor provides a UI for adding, removing, and editing launch items (EXE, URL, Store). Adding an item opens an inline edit dialog where the user fills in name, path, and optional fields.
 
 5. **User clicks "Save & Refresh"** -- The editor calls `ConfigLoader.Save(configPath, config)` to write the updated JSON back to disk with `WriteIndented = true`.
 
@@ -347,7 +347,7 @@ Note: `ConfigLoader.Load` uses `PropertyNameCaseInsensitive = true`, so field na
 | `LaunchDeck.Shared/ConfigModels.cs` | `LaunchDeckConfig`, `LaunchItemConfig`, `LaunchItemType`, `ConfigLoadResult`, `ConfigLoadStatus`, `ConfigLoader` |
 | `LaunchDeck.Companion/Program.cs` | IPC dispatcher: `HandleLoadConfig`, `HandleOpenEditor` |
 | `LaunchDeck.Companion/IconExtractor.cs` | EXE icon extraction, favicon fetching, cache management |
-| `LaunchDeck.Companion/ExePicker.cs` | Win32 file picker dialog, display name extraction, config append |
+| `LaunchDeck.Companion/ExePicker.cs` | Display name extraction, config append utility |
 | `LaunchDeck.Widget/Services/CompanionClient.cs` | Widget-side IPC client: `LoadConfigAsync`, `ExtractIconAsync`, `FetchFaviconAsync`, `OpenEditorAsync` |
 | `LaunchDeck.Widget/LaunchDeckWidget.xaml.cs` | Widget UI: `LoadConfigAsync`, `LoadIconsAsync`, `OnEditClick` |
 | `config.sample.json` | Example config file with all three item types |

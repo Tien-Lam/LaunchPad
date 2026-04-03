@@ -16,7 +16,7 @@ The App Service runs in-process with the widget (background task), giving the co
 
 ### Companion (client) -- Program.cs
 
-1. On startup, the companion acquires a single-instance mutex (`Local\LaunchDeckCompanion`) with `mutex.WaitOne(500)` (500ms timeout). If the mutex cannot be acquired within the timeout, the process exits.
+1. On startup, the companion acquires a single-instance mutex (`Local\LaunchDeckCompanion`) with `mutex.WaitOne(500)` (500ms timeout). If the mutex cannot be acquired within the timeout, the process proceeds anyway — a stuck previous instance (zombie) will be sorted out by the App Service.
 2. Creates an `AppServiceConnection` with:
    - `AppServiceName = "com.launchdeck.service"`
    - `PackageFamilyName = Package.Current.Id.FamilyName`
@@ -547,7 +547,7 @@ Widget UI                CompanionClient              Companion
    |                           |  { action: "open-editor",|
    |                           |    configPath: "..." }   |
    |                           |------------------------->|
-   |                           |                          | Opens WPF ConfigEditorWindow
+   |                           |                          | Opens WPF EditorWindow
    |                           |                          | (or focuses existing window)
    |                           |  { status: "ok" }        |
    |                           |<-------------------------|
@@ -584,7 +584,7 @@ Widget UI                CompanionClient              Companion
 | `LaunchDeck.Companion/Program.cs`                  | Connection setup + action dispatch  |
 | `LaunchDeck.Companion/LaunchHandler.cs`            | Process launch logic                |
 | `LaunchDeck.Companion/IconExtractor.cs`            | Icon extraction and favicon fetch   |
-| `LaunchDeck.Companion/ExePicker.cs`                | File picker dialog and config append|
+| `LaunchDeck.Companion/ExePicker.cs`                | Display name extraction, config append utility |
 | `LaunchDeck.Companion/Log.cs`                      | File logger for companion diagnostics |
 | `LaunchDeck.Companion/EditorManager.cs`            | WPF editor window lifecycle management |
 | `LaunchDeck.Shared/ConfigModels.cs`                | Config types, loader, and saver     |

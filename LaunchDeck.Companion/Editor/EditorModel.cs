@@ -16,6 +16,17 @@ public class EditorModel
         SelectedIndex = Items.Count > 0 ? 0 : -1;
     }
 
+    public void AddExe()
+    {
+        Items.Add(new LaunchItemConfig
+        {
+            Name = "New App",
+            Type = LaunchItemType.Exe,
+            Path = ""
+        });
+        SelectedIndex = Items.Count - 1;
+    }
+
     public void AddExe(string path, string displayName)
     {
         Items.Add(new LaunchItemConfig

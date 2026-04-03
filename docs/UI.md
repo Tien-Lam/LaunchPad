@@ -187,7 +187,7 @@ The config editor (`EditorWindow`) is a WPF window using MVVM architecture with 
 
 - **EditorViewModel** — main view model with `ObservableCollection<ItemViewModel>`, commands for add/edit/delete/move/save, and overlay dialog state
 - **ItemViewModel** — wraps `LaunchItemConfig` with `INotifyPropertyChanged` and async icon loading
-- **EditorModel** — data layer (load, save, add, remove, move, validate) — unchanged from pre-redesign, fully tested
+- **EditorModel** — data layer (load, save, add, remove, move, validate) — fully tested
 - **EditorTheme.xaml** — shared resource dictionary with all colors, brushes, and styles (merged by both editor and picker windows)
 
 ### Layout
@@ -202,7 +202,7 @@ Single scrollable page with:
 
 ### Edit Dialog
 
-Clicking edit on a card opens an overlay dialog within the same window:
+Clicking edit on a card -- or adding a new EXE/URL item -- opens an overlay dialog within the same window:
 - Semi-transparent backdrop dims the item list
 - Centered card with form fields: Name, Type (read-only), Path (with Browse for EXE), Arguments (EXE only), Custom Icon (with Browse)
 - Save commits changes to the item; Cancel or backdrop click discards

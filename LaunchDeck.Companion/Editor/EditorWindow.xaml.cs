@@ -40,9 +40,7 @@ public partial class EditorWindow : Window
 
     private void OnAddExeClick(object sender, RoutedEventArgs e)
     {
-        var exePath = ExePicker.ShowPickerDialog();
-        if (exePath != null)
-            ViewModel.AddExeCommand.Execute(exePath);
+        ViewModel.AddExeCommand.Execute(null);
     }
 
     private void OnAddUrlClick(object sender, RoutedEventArgs e)

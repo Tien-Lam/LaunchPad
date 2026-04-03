@@ -177,7 +177,7 @@ For areas that cannot be automated, follow this procedure:
 - **EXE launch:** Click an EXE-type item. Verify the application starts.
 - **URL launch:** Click a URL-type item. Verify the browser opens to the correct URL.
 - **Store app launch:** Click a store-type item. Verify the store app launches.
-- **Add EXE via picker:** Click the `+` button on the widget. Select an EXE file. Verify it appears in the grid and persists in `config.json`.
+- **Add EXE via editor:** Open the editor (gear button), click "+ Add item" > "EXE Application". Verify the edit dialog opens with a blank item. Set a name and path, save, then click "Save and Refresh". Verify the item appears in the widget grid and persists in `config.json`.
 - **Icon display:** Verify EXE items show extracted icons and URL items show favicons.
 - **Error handling:** Remove or corrupt `config.json`. Verify the widget shows an appropriate error state rather than crashing.
 - **IPC resilience:** Kill the companion process while the widget is open. Verify the widget handles the disconnection gracefully.

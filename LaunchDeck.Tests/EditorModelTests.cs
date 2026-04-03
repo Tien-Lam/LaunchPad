@@ -20,6 +20,19 @@ public class EditorModelTests
     }
 
     [Fact]
+    public void AddExe_NoArgs_CreatesPlaceholderItem()
+    {
+        var model = new EditorModel();
+        model.AddExe();
+
+        Assert.Single(model.Items);
+        Assert.Equal("New App", model.Items[0].Name);
+        Assert.Equal(LaunchItemType.Exe, model.Items[0].Type);
+        Assert.Equal("", model.Items[0].Path);
+        Assert.Equal(0, model.SelectedIndex);
+    }
+
+    [Fact]
     public void AddUrl_AppendsDefaultUrlItem()
     {
         var model = new EditorModel();

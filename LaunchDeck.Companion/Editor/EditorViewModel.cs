@@ -26,7 +26,7 @@ public class EditorViewModel : INotifyPropertyChanged
         RebuildItems();
 
         SaveCommand = new RelayCommand(Save);
-        AddExeCommand = new RelayCommand<string>(path => AddExe(path));
+        AddExeCommand = new RelayCommand(AddExe);
         AddUrlCommand = new RelayCommand(AddUrl);
         AddStoreCommand = new RelayCommand<(string Name, string Aumid)>(t => AddStore(t.Name, t.Aumid));
         DialogSaveCommand = new RelayCommand(DialogSave);
@@ -133,17 +133,16 @@ public class EditorViewModel : INotifyPropertyChanged
         Items.Move(index, index + 1);
     }
 
-    private void AddExe(string exePath)
+    private void AddExe()
     {
-        var displayName = ExePicker.GetDisplayName(exePath);
-        _model.AddExe(exePath, displayName);
+        _model.AddExe();
         var vm = new ItemViewModel(_model.Items[_model.Items.Count - 1]);
         Items.Add(vm);
         OnPropertyChanged(nameof(ItemCountText));
         Edit(vm);
     }
 
-    public void AddUrl()
+    private void AddUrl()
     {
         _model.AddUrl();
         var vm = new ItemViewModel(_model.Items[_model.Items.Count - 1]);

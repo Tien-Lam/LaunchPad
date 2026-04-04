@@ -192,25 +192,34 @@ The config editor (`EditorWindow`) is a WPF window using MVVM architecture with 
 
 ### Layout
 
-Single scrollable page with:
-- Page title and subtitle
-- Section header "Items"
-- Vertical stack of card-style item rows (`ItemsControl` bound to `ObservableCollection`)
+DockPanel with sticky header/footer and scrollable item list:
+- **Header** (top): Page title and subtitle
+- **Footer** (bottom): "+ Add item" menu (EXE Application / URL / Store App) and "Save and Refresh" button
+- **Middle** (scrollable): Vertical stack of card-style item rows (`ItemsControl` bound to `ObservableCollection`)
 - Each card shows: 32x32 icon, name, path, and icon buttons (move up/down, edit, delete)
-- "+ Add item" menu (EXE Application / URL / Store App)
-- Item count and "Save and Refresh" button at the bottom
+- Touch scrolling enabled with `PanningMode="VerticalOnly"`
 
 ### Edit Dialog
 
-Clicking edit on a card -- or adding a new EXE/URL item -- opens an overlay dialog within the same window:
+Clicking edit on a card -- or adding any new item (EXE, URL, or Store App) -- opens an overlay dialog within the same window:
 - Semi-transparent backdrop dims the item list
-- Centered card with form fields: Name, Type (read-only), Path (with Browse for EXE), Arguments (EXE only), Custom Icon (with Browse)
-- Save commits changes to the item; Cancel or backdrop click discards
+- Centered card with form fields: Name, Type (read-only), Path (with Browse for EXE and Store), Arguments (EXE only), Custom Icon (with Browse)
+- **Add-on-save**: New items are only added to the list when Save is clicked. Cancel discards without creating an item.
+- Browse for EXE opens a file picker; Browse for Store opens the Store App Picker to select an installed app (populates both Name and Path)
+- Dialog content is scrollable for small screens (`ScrollViewer` with touch panning)
 - Editing the custom icon path triggers an async icon reload on the card
+
+### Unsaved Changes
+
+Closing the editor with unsaved changes shows a themed confirmation dialog (Save / Don't Save / Cancel). The editor tracks dirty state on any item add, edit, delete, or reorder. Saving clears the dirty flag.
 
 ### Validation
 
-On save, `EditorModel.Validate()` checks for empty names, empty paths, URLs without `http://`/`https://` scheme, and Store paths without `shell:AppsFolder\` prefix. If issues are found, a warning dialog shows them with a "Save anyway?" option.
+On save, `EditorModel.Validate()` checks for empty names, empty paths, URLs without `http://`/`https://` scheme, and Store paths without `shell:AppsFolder\` prefix. If issues are found, a themed confirmation dialog shows them with a "Save anyway?" option.
+
+### MessageDialog
+
+A custom borderless WPF dialog (`MessageDialog`) replaces the Win32 `MessageBox` for all confirmations. It uses the same dark theme (`EditorTheme.xaml`) with rounded corners, supports Yes/No, Yes/No/Cancel, OK/Cancel, and OK button layouts. For the unsaved-changes prompt, button labels are contextual ("Save" / "Don't Save" / "Cancel").
 
 ### Theme
 
@@ -221,14 +230,17 @@ All colors and styles are defined in `EditorTheme.xaml`:
 
 ## Store App Picker
 
-The editor includes a "Select Store App" picker dialog (`StoreAppPickerWindow`) for adding Store/UWP apps.
+The editor includes a "Select Store App" picker dialog (`StoreAppPickerWindow`) for browsing installed Store/UWP apps.
 
-- Opened via the "+ Add item" menu → "Store App"
+- Opened via the Browse button in the edit dialog when adding/editing a Store App item
 - Lists all installed Store/UWP apps using `PackageManager.FindPackagesForUser`
+- Uses `ListView` with `VirtualizingPanel.ScrollUnit="Pixel"` for smooth scrolling
+- Touch support via `ScrollViewer.PanningMode="VerticalOnly"` and larger touch targets (`Padding="8,6"`)
+- Keyboard navigation with `KeyboardNavigation.DirectionalNavigation="Contained"`
 - Each entry shows a 32x32 icon (from the package manifest) and app name
 - Search box filters by app name (case-insensitive substring match)
 - Selection via double-click or OK button
-- Selected app is added with `Type = Store` and `Path = shell:AppsFolder\{AUMID}`
+- Selected app populates the edit dialog's Name and Path (`shell:AppsFolder\{AUMID}`)
 - Uses the same `EditorTheme.xaml` for consistent visuals
 
 ---

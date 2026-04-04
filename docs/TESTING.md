@@ -85,6 +85,40 @@ Source under test: `LaunchDeck.Companion/IconExtractor.cs`
 
 Note: `ExtractFromExe_ValidExe_SavesPng` depends on `C:\Windows\notepad.exe` being present on the machine. This test will fail in environments without a standard Windows installation (e.g., minimal containers).
 
+### EditorModelTests (25 tests)
+
+Tests the editor data model (`LaunchDeck.Companion.Editor.EditorModel`) -- add, remove, move, load, save, and validate operations.
+
+| Test | What it verifies |
+|------|-----------------|
+| `AddExe_AppendsItemAndSelectsIt` | Adding an EXE with name/path appends correctly and selects it |
+| `AddExe_NoArgs_CreatesPlaceholderItem` | No-arg overload creates `"New App"` placeholder with empty path |
+| `AddUrl_AppendsDefaultUrlItem` | URL item defaults to `"New URL"` name and `"https://"` path |
+| `AddStore_NoArgs_CreatesPlaceholderItem` | No-arg overload creates `"New Store App"` placeholder with empty path |
+| `AddStore_AppendsStoreItemAndSelectsIt` | Adding a Store item with name/AUMID path works correctly |
+| `AddMultiple_SelectsLastAdded` | SelectedIndex tracks the most recently added item |
+| `Remove_MiddleItem_ClampsSelection` | Removing the middle item clamps selection to valid range |
+| `Remove_LastItem_SelectsPrevious` | Removing the last item selects the previous one |
+| `Remove_OnlyItem_SetsSelectionToNegativeOne` | Removing the only item sets SelectedIndex to -1 |
+| `Remove_InvalidIndex_ReturnsFalse` | Out-of-range indices return false without modifying the list |
+| `MoveUp_SwapsWithPrevious` | Swaps item with its predecessor and updates selection |
+| `MoveUp_FirstItem_ReturnsFalse` | Cannot move the first item up |
+| `MoveDown_SwapsWithNext` | Swaps item with its successor and updates selection |
+| `MoveDown_LastItem_ReturnsFalse` | Cannot move the last item down |
+| `Load_ReadsConfigFile` | Loads a config from a temp JSON file |
+| `Load_MissingFile_StartsEmpty` | Missing file results in empty list with SelectedIndex = -1 |
+| `Save_WritesConfigAndCallsCallback` | Saves to disk and invokes the callback |
+| `Save_NullCallback_DoesNotThrow` | Null callback is handled gracefully |
+| `Validate_ValidItems_ReturnsEmpty` | Valid EXE + URL + Store items produce no errors |
+| `Validate_EmptyName_ReturnsError` | Empty name produces a validation error |
+| `Validate_EmptyPath_ReturnsError` | Empty path produces a validation error |
+| `Validate_UrlMissingScheme_ReturnsError` | URL without `http://` or `https://` scheme is flagged |
+| `Validate_UrlWithScheme_NoError` | URL with valid scheme passes validation |
+| `Validate_StoreMissingPrefix_ReturnsError` | Store path without `shell:AppsFolder\` prefix is flagged |
+| `Validate_MultipleErrors_ReturnsAll` | Multiple invalid items produce multiple errors |
+
+Source under test: `LaunchDeck.Companion/Editor/EditorModel.cs`
+
 ### ExePickerTests (5 tests)
 
 Tests the EXE picker logic (`LaunchDeck.Companion.ExePicker`) for display name extraction and config manipulation.
@@ -177,7 +211,11 @@ For areas that cannot be automated, follow this procedure:
 - **EXE launch:** Click an EXE-type item. Verify the application starts.
 - **URL launch:** Click a URL-type item. Verify the browser opens to the correct URL.
 - **Store app launch:** Click a store-type item. Verify the store app launches.
-- **Add EXE via editor:** Open the editor (gear button), click "+ Add item" > "EXE Application". Verify the edit dialog opens with a blank item. Set a name and path, save, then click "Save and Refresh". Verify the item appears in the widget grid and persists in `config.json`.
+- **Add EXE via editor:** Open the editor (gear button), click "+ Add item" > "EXE Application". Verify the edit dialog opens with placeholder values. Set a name and browse for an EXE, save, then click "Save and Refresh". Verify the item appears in the widget grid.
+- **Add Store App via editor:** Click "+ Add item" > "Store App". Verify the edit dialog opens (not the app picker directly). Click Browse to open the Store App Picker. Select an app and verify Name and Path are populated. Save and verify the item appears.
+- **Cancel discards new item:** Click "+ Add item" for any type, then Cancel. Verify no item was added to the list.
+- **Unsaved changes prompt:** Make a change (add, edit, delete, or reorder), then close the window. Verify a themed dialog appears with Save / Don't Save / Cancel options.
+- **Store App Picker scrolling:** Open the Store App Picker and verify smooth scrolling with touch, keyboard arrows, and mouse wheel.
 - **Icon display:** Verify EXE items show extracted icons and URL items show favicons.
 - **Error handling:** Remove or corrupt `config.json`. Verify the widget shows an appropriate error state rather than crashing.
 - **IPC resilience:** Kill the companion process while the widget is open. Verify the widget handles the disconnection gracefully.

@@ -69,7 +69,7 @@ The config file is a single JSON object with one top-level key, `items`, contain
 | Field  | Type     | Required | Default | Description |
 |--------|----------|----------|---------|-------------|
 | `name` | string   | Yes      | `""`    | Display name shown on the widget tile. |
-| `type` | string   | Yes      | --      | One of `"exe"`, `"url"`, `"store"`. Case-insensitive on read (widget-side deserialization uses `JsonDocument` + `TryGetProperty` with case-insensitive matching). Serialized as lowercase via `JsonStringEnumConverter`. |
+| `type` | string   | Yes      | --      | One of `"Exe"`, `"Url"`, `"Store"`. Widget-side deserialization uses `JsonDocument` + `TryGetProperty` with two explicit casings per field (lowercase then PascalCase), and `Enum.TryParse(typeStr, true, ...)` for case-insensitive enum matching. Serialized as PascalCase via `JsonStringEnumConverter` (no `JsonNamingPolicy` specified). |
 | `path` | string   | Yes      | `""`    | Target to launch. Meaning depends on `type` (see below). |
 | `args` | string?  | No       | `null`  | Command-line arguments. Only meaningful for `type: "exe"`. |
 | `icon` | string?  | No       | `null`  | Absolute path to a custom icon image file. When set, bypasses all automatic icon resolution. |
@@ -120,7 +120,7 @@ The `path` field is a full URL (including scheme). Launched via the system's def
 
 ### `store` -- Launch a Microsoft Store / UWP App
 
-The `path` field is a `shell:AppsFolder\` URI containing the app's AUMID (Application User Model ID). The editor's "Add Store" button provides a picker that fills this automatically.
+The `path` field is a `shell:AppsFolder\` URI containing the app's AUMID (Application User Model ID). The editor's "Add Store" button opens an edit dialog, and the Browse button within that dialog opens the Store App Picker which fills the AUMID and name automatically.
 
 ```json
 {
@@ -150,13 +150,15 @@ Icons are resolved per-item when the widget loads. The resolution follows a chai
 
 ### Resolution Chain
 
-1. **Custom icon path** -- If the item's `icon` field is non-null, use that path directly. No extraction or network request occurs.
+1. **Custom icon** (all types) -- If the item's `icon` field is non-null, the widget sends a `load-custom-icon` IPC request to the companion, which reads the file, converts it to PNG if needed (via `IconExtractor.LoadCustomIcon`), and returns the image data as base64 bytes.
 
-2. **Extracted from EXE** (type `exe` only) -- The companion calls `Icon.ExtractAssociatedIcon(exePath)` to pull the embedded icon from the executable, converts it to PNG, and saves it to the icon cache. Returned to the widget as an absolute file path.
+2. **Extracted from EXE** (type `exe` only) -- The widget sends an `extract-icon` IPC request. The companion calls `Icon.ExtractAssociatedIcon(exePath)` to pull the embedded icon from the executable, converts it to PNG, saves it to the icon cache, reads the cached file, and returns the data as base64 bytes.
 
-3. **Fetched favicon** (type `url` only) -- The companion fetches a favicon via the Google favicon service: `https://www.google.com/s2/favicons?domain={host}&sz=64`. The result is saved to the icon cache as a PNG.
+3. **Fetched favicon** (type `url` only) -- The widget sends a `fetch-favicon` IPC request. The companion fetches a favicon via the Google favicon service: `https://www.google.com/s2/favicons?domain={host}&sz=64`. The result is saved to the icon cache as a PNG, read back, and returned as base64 bytes.
 
-4. **Default asset** -- If all of the above fail (or for `store` type items which have no automatic extraction), the widget falls back to a bundled asset:
+4. **Extracted from Store app** (type `store` only) -- The widget sends an `extract-store-icon` IPC request with the AUMID. The companion calls `IconExtractor.ExtractStoreAppIcon`, which locates the app's installed package, reads its `AppxManifest.xml` to find the logo path, and returns the icon data as base64 bytes.
+
+5. **Default asset** -- If all of the above fail, the widget falls back to a bundled asset:
    - `ms-appx:///Assets/DefaultGlobe.png` for `url` items
    - `ms-appx:///Assets/DefaultApp.png` for `exe` and `store` items
 
@@ -213,7 +215,7 @@ The widget (UWP) cannot read arbitrary filesystem paths due to the UWP sandbox. 
 
 5. **Widget populates grid** -- `LoadConfigAsync` maps each `LaunchItemConfig` into a `LaunchItem` view model, adds it to the `ObservableCollection<LaunchItem>`, then kicks off `LoadIconsAsync` for icon resolution.
 
-6. **Icon resolution** -- For each item, the widget sends IPC requests (`extract-icon` or `fetch-favicon`) to the companion, which performs the actual I/O and returns base64-encoded icon data. The widget decodes the data into a `BitmapImage`.
+6. **Icon resolution** -- For each item, the widget sends IPC requests (`load-custom-icon`, `extract-icon`, `fetch-favicon`, or `extract-store-icon` depending on item type and config) to the companion, which performs the actual I/O and returns base64-encoded icon data. The widget decodes the data into a `BitmapImage`. See the Resolution Chain above for the full fallback order.
 
 ### Reload Triggers
 
@@ -250,9 +252,9 @@ Users add or edit items by opening the WPF config editor from the widget. Clicki
 
 3. **Companion opens WPF editor** -- The companion launches `EditorWindow` on a persistent STA thread, loading the current config. If the editor is already open, the existing window is focused instead.
 
-4. **User adds/edits items** -- The editor provides a UI for adding, removing, and editing launch items (EXE, URL, Store). Adding an item opens an inline edit dialog where the user fills in name, path, and optional fields.
+4. **User adds/edits items** -- The editor provides a UI for adding, removing, and editing launch items (EXE, URL, Store). Adding an item opens an inline edit dialog where the user fills in name, path, and optional fields. For Store items, the Browse button within the edit dialog opens the Store App Picker, which lists installed UWP/Store apps and fills in the AUMID and name automatically.
 
-5. **User clicks "Save & Refresh"** -- The editor calls `ConfigLoader.Save(configPath, config)` to write the updated JSON back to disk with `WriteIndented = true`.
+5. **User clicks "Save and Refresh"** -- The editor calls `ConfigLoader.Save(configPath, config)` to write the updated JSON back to disk with `WriteIndented = true`.
 
 6. **Companion notifies widget** -- After saving, the companion sends an unsolicited push message to the widget:
    ```
@@ -346,9 +348,10 @@ Note: `ConfigLoader.Load` uses `PropertyNameCaseInsensitive = true`, so field na
 |------|------|
 | `LaunchDeck.Shared/ConfigModels.cs` | `LaunchDeckConfig`, `LaunchItemConfig`, `LaunchItemType`, `ConfigLoadResult`, `ConfigLoadStatus`, `ConfigLoader` |
 | `LaunchDeck.Companion/Program.cs` | IPC dispatcher: `HandleLoadConfig`, `HandleOpenEditor` |
-| `LaunchDeck.Companion/IconExtractor.cs` | EXE icon extraction, favicon fetching, cache management |
-| `LaunchDeck.Companion/ExePicker.cs` | Display name extraction, config append utility |
-| `LaunchDeck.Widget/Services/CompanionClient.cs` | Widget-side IPC client: `LoadConfigAsync`, `ExtractIconAsync`, `FetchFaviconAsync`, `OpenEditorAsync` |
+| `LaunchDeck.Companion/IconExtractor.cs` | EXE icon extraction, favicon fetching, store app icon extraction, custom icon loading, cache management |
+| `LaunchDeck.Companion/StoreAppEnumerator.cs` | Store app enumeration, AUMID/package lookup, logo path resolution |
+| `LaunchDeck.Companion/Editor/StoreAppPickerWindow.xaml.cs` | Store App Picker dialog for selecting installed UWP/Store apps |
+| `LaunchDeck.Widget/Services/CompanionClient.cs` | Widget-side IPC client: `LoadConfigAsync`, `ExtractIconAsync`, `FetchFaviconAsync`, `LoadCustomIconAsync`, `ExtractStoreIconAsync`, `OpenEditorAsync` |
 | `LaunchDeck.Widget/LaunchDeckWidget.xaml.cs` | Widget UI: `LoadConfigAsync`, `LoadIconsAsync`, `OnEditClick` |
 | `config.sample.json` | Example config file with all three item types |
 

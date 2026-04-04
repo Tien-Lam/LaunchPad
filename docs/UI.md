@@ -22,7 +22,7 @@ The widget subscribes to `XboxGameBarWidget.RequestedOpacityChanged` and applies
 
 1. On widget initialization, the handler is registered and the current opacity is applied.
 2. When the Game Bar opacity slider changes, `RequestedOpacityChanged` fires.
-3. The handler converts `widget.RequestedOpacity` (0–100 scale) to an alpha byte and rebuilds the page `Background` brush with `Color.FromArgb(alpha, 0x20, 0x20, 0x20)`.
+3. The handler normalizes `widget.RequestedOpacity` (0-100) to a 0.0-1.0 fraction, converts that to an alpha byte (0-255), and rebuilds the page `Background` brush with `Color.FromArgb(alpha, 0x20, 0x20, 0x20)`.
 
 Only the background becomes transparent — text, icons, and tile content stay fully opaque. Setting `Page.Opacity` directly would wash out all content, so the alpha channel approach is used instead.
 
@@ -65,6 +65,7 @@ Page (Background=#202020, RequestedTheme=Dark)
         ItemsWrapGrid                -- 4-column horizontal wrap, centered
         DataTemplate                 -- per-tile template (LaunchItem)
     Button "EditButton"              -- circular gear button, bottom-right
+    TextBlock "LoadingState"         -- "Loading...", centered, Visibility=Collapsed
     StackPanel "EmptyState"          -- centered message, Visibility=Collapsed
 ```
 
@@ -129,8 +130,8 @@ Pointer press adds a scale-down effect:
 On `ItemClick`, the widget launches the target app and dismisses the Game Bar overlay:
 
 1. **URL and Store items** use `XboxGameBarWidget.LaunchUriAsync(uri)` — Game Bar's built-in launcher that handles overlay dismissal and app focus automatically.
-2. **EXE items without arguments** also use `LaunchUriAsync` with the file path as a URI.
-3. **EXE items with arguments** (or if `LaunchUriAsync` fails) fall back to the companion process via the `launch` IPC action. The companion calls `SetForegroundWindow` on the launched process to bring it to the foreground.
+2. **EXE items without arguments** also use `LaunchUriAsync` with the file path as a URI (guarded by `widget != null`).
+3. **EXE items with arguments**, or when the widget reference is null, or if `LaunchUriAsync` fails, fall back to the companion process via the `launch` IPC action. The companion calls `SetForegroundWindow` on the launched process to bring it to the foreground.
 4. When the widget is pinned, no overlay dismissal occurs — the widget stays visible.
 
 ### Click Feedback
@@ -181,7 +182,7 @@ A circular floating action button for opening the config editor:
 
 ## Config Editor
 
-The config editor (`EditorWindow`) is a WPF window using MVVM architecture with a WinUI 3 card-based design.
+The config editor (`EditorWindow`) is a WPF window using a ViewModel + code-behind hybrid pattern with a WinUI 3 card-based design. The `EditorViewModel` holds state and commands; the window code-behind handles click events and delegates to the ViewModel.
 
 ### Architecture
 
@@ -219,7 +220,7 @@ On save, `EditorModel.Validate()` checks for empty names, empty paths, URLs with
 
 ### MessageDialog
 
-A custom borderless WPF dialog (`MessageDialog`) replaces the Win32 `MessageBox` for all confirmations. It uses the same dark theme (`EditorTheme.xaml`) with rounded corners, supports Yes/No, Yes/No/Cancel, OK/Cancel, and OK button layouts. For the unsaved-changes prompt, button labels are contextual ("Save" / "Don't Save" / "Cancel").
+A custom borderless WPF dialog (`MessageDialog`) replaces the Win32 `MessageBox` for all confirmations. It uses the same dark theme (`EditorTheme.xaml`) with rounded corners and supports four button layouts: Yes/No, OK/Cancel, OK-only, and a `YesNoCancel` layout that uses contextual labels ("Save" / "Don't Save" / "Cancel").
 
 ### Theme
 
@@ -256,12 +257,12 @@ The `EmptyState` StackPanel is shown when the grid cannot display tiles. It is c
 
 ### EmptyStateMessage
 
-- `FontSize="11"`, centered, `TextWrapping="Wrap"`.
+- `FontSize="12"`, centered, `TextWrapping="Wrap"`.
 - `Foreground="#C5FFFFFF"` (secondary/muted text, 77% white).
 
 ### Trigger Conditions
 
-The `ShowEmptyState(title, message)` method hides `ItemsGrid` and shows `EmptyState`. It is called from `LoadConfigAsync()` under three conditions:
+The `ShowEmptyState(title, message)` method hides `ItemsScrollViewer` (and `LoadingState`) and shows `EmptyState`. It is called from `LoadConfigAsync()` under three conditions:
 
 | Condition                     | Title                   | Message                                          |
 |-------------------------------|-------------------------|--------------------------------------------------|
@@ -269,7 +270,7 @@ The `ShowEmptyState(title, message)` method hides `ItemsGrid` and shows `EmptySt
 | `ConfigLoadStatus.ParseError`   | "Invalid config file"   | "JSON parse error:\n{error}"                     |
 | Config is null or has 0 items   | "No apps configured"    | "Click the gear button to add apps"              |
 
-When items are loaded successfully, `ItemsGrid.Visibility` is set to `Visible` and `EmptyState.Visibility` to `Collapsed`.
+When items are loaded successfully, `ItemsScrollViewer.Visibility` is set to `Visible`, `EmptyState.Visibility` to `Collapsed`, and `LoadingState` is shown while icons load then collapsed.
 
 ---
 
@@ -315,7 +316,7 @@ The widget is not a standalone app. If launched directly (e.g., from Start menu)
 
 1. Checks `args.Kind == ActivationKind.Protocol`.
 2. Verifies the URI scheme is `ms-gamebarwidget`.
-3. Casts to `XboxGameBarWidgetActivatedEventArgs` and checks `IsLaunchActivation`.
+3. Casts to `XboxGameBarWidgetActivatedEventArgs` and checks `widgetArgs != null`.
 4. Creates a `Frame`, sets it as `Window.Current.Content`.
 5. Instantiates `XboxGameBarWidget` with the activation args, `CoreWindow`, and the frame.
 6. Navigates the frame to `LaunchDeckWidget` page.
@@ -325,9 +326,21 @@ The widget is not a standalone app. If launched directly (e.g., from Start menu)
 
 When the companion process connects via the `com.launchdeck.service` App Service:
 
-1. Captures the `AppServiceConnection` from `AppServiceTriggerDetails`.
-2. Stores it in both a private field and the static `App.CompanionConnection` property for use by `CompanionClient`.
-3. Registers a cancellation handler that completes the deferral and nulls out the connection.
+1. Captures the `AppServiceConnection` from `AppServiceTriggerDetails` and stores it in both a private field and the static `App.CompanionConnection` property.
+2. Calls `CompanionClient.RaiseCompanionConnected()` to notify subscribers that the connection is ready.
+3. Registers `CompanionClient.OnCompanionMessage` on `RequestReceived` for incoming IPC messages.
+4. Registers a `ServiceClosed` handler that nulls out `CompanionConnection` and calls `TryRelaunchCompanion()` (retries with exponential backoff: 1s, 2s, 4s).
+5. Registers a `Canceled` handler that disposes the connection (so the companion side sees the close), nulls references, and completes the deferral.
+
+### Config Reload Triggers
+
+After initial load, the widget re-invokes `LoadConfigAsync()` on three events:
+
+- **`CompanionClient.ConfigUpdated`** — fired when the companion notifies that config was saved (e.g., after the editor closes).
+- **`CompanionClient.CompanionConnected`** — fired when a new App Service connection is established (see `OnBackgroundActivated`), ensuring config is loaded even if the companion restarted.
+- **`widget.VisibleChanged`** — fired when the Game Bar overlay becomes visible. Only reloads if `Visible` is true. Catches saves that were missed while the widget was suspended.
+
+These subscriptions are registered once in `OnLoaded` (guarded by `_eventsSubscribed`).
 
 ### OnSuspending
 
@@ -360,6 +373,7 @@ In `LoadIconsAsync()`, icons are resolved per item in priority order:
 2. **Type-based** -- If no custom icon:
    - `Type == "exe"`: call `CompanionClient.ExtractIconAsync(path)` to extract the EXE's embedded icon.
    - `Type == "url"`: call `CompanionClient.FetchFaviconAsync(path)` to download the site's favicon.
+   - `Type == "store"`: extract the AUMID from the `shell:AppsFolder\` path, then call `CompanionClient.ExtractStoreIconAsync(aumid)` to load the app's icon from its package manifest.
 3. **Default fallback** -- On failure or null, fall back to a default asset:
    - `"url"` type: `ms-appx:///Assets/DefaultGlobe.png`
    - All others: `ms-appx:///Assets/DefaultApp.png`

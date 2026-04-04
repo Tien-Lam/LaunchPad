@@ -5,22 +5,33 @@
 LaunchDeck is an Xbox Game Bar widget (Win+G) that launches apps from a configurable grid. It runs as a single MSIX package containing two processes that communicate over App Service IPC.
 
 ```
-+---------------------------+          App Service IPC          +---------------------------+
-|   LaunchDeck.Widget (UWP)  | <-------- ValueSet msgs -------> | LaunchDeck.Companion (.NET) |
-|                           |        com.launchdeck.service      |                           |
-|  - XAML grid UI           |                                   |  - EXE/URL/Store launch   |
-|  - Game Bar integration   |                                   |  - Config file I/O        |
-|  - Icon display           |                                   |  - Icon extraction        |
-|  - User interaction       |                                   |  - Favicon fetching       |
-+---------------------------+                                   |  - File picker dialogs    |
-              |                                                 +---------------------------+
-              |  references                                                  |  references
-              v                                                              v
-+---------------------------+                              +---------------------------+
-|  LaunchDeck.Shared         |                              |  LaunchDeck.Shared         |
-|  (.NET Standard 2.0)      |                              |  (.NET Standard 2.0)      |
-|  - ConfigModels           |                              |  - ConfigModels           |
-|  - ConfigLoader           |                              |  - ConfigLoader           |
++---------------------------+          App Service IPC          +----------------------------------+
+|   LaunchDeck.Widget (UWP)  | <-------- ValueSet msgs -------> | LaunchDeck.Companion (.NET 10)    |
+|                           |        com.launchdeck.service      |                                  |
+|  - XAML grid UI           |                                   |  - EXE/URL/Store launch          |
+|  - Game Bar integration   |                                   |  - Config file I/O               |
+|  - Icon display           |                                   |  - Icon extraction               |
+|  - User interaction       |                                   |  - Favicon fetching              |
+|                           |                                   |  - File picker dialogs           |
+|  Services/                |                                   |  - Store app enumeration         |
+|    CompanionClient.cs     |                                   |  - Window focus (NativeMethods)  |
+|  Models/                  |                                   |                                  |
+|    LaunchItem.cs          |                                   |  Editor/ (WPF)                   |
++---------------------------+                                   |    EditorWindow, EditorViewModel  |
+              |                                                 |    EditorModel, EditorManager     |
+              |  references                                     |    StoreAppPickerWindow           |
+              v                                                 |    MessageDialog, ItemViewModel   |
++---------------------------+                                   |    RelayCommand, EditorTheme.xaml |
+|  LaunchDeck.Shared         |                                   +----------------------------------+
+|  (.NET Standard 2.0)      |                                                    |  references
+|                           |                                                    v
+|  LaunchDeckConfig         |                              +---------------------------+
+|  LaunchItemConfig         |                              |  LaunchDeck.Shared         |
+|  LaunchItemType (enum)    |                              |  (.NET Standard 2.0)      |
+|  ConfigLoadResult         |                              |                           |
+|  ConfigLoadStatus (enum)  |                              |  (same classes as left)   |
+|  ConfigLoader (static)    |                              |                           |
+|    Load, Save, ParseJson  |                              |                           |
 +---------------------------+                              +---------------------------+
 ```
 
@@ -38,7 +49,7 @@ The companion is a full-trust .NET 10 Win32 process that does all of this on beh
 
 | Project | Framework | Purpose |
 |---------|-----------|---------|
-| `LaunchDeck.Widget` | UWP (netcore 6.2.14) | Game Bar widget UI |
+| `LaunchDeck.Widget` | UWP (`Microsoft.NETCore.UniversalWindowsPlatform` 6.2.14) | Game Bar widget UI |
 | `LaunchDeck.Companion` | .NET 10 (WinExe) | Full-trust helper process |
 | `LaunchDeck.Shared` | .NET Standard 2.0 | Config models, shared by both |
 | `LaunchDeck.Package` | WAPPROJ | MSIX packaging, manifest, assets |
@@ -56,14 +67,18 @@ All communication uses `ValueSet` messages over `AppServiceConnection`. Every re
 | `load-config` | Widget -> Companion | Read config.json | `configPath` (optional) |
 | `extract-icon` | Widget -> Companion | Get icon from EXE | `path` |
 | `fetch-favicon` | Widget -> Companion | Get favicon for URL | `url` |
+| `load-custom-icon` | Widget -> Companion | Load a user-specified icon file | `path` |
+| `extract-store-icon` | Widget -> Companion | Get icon for a Store/UWP app | `aumid` |
 | `open-editor` | Widget -> Companion | Open WPF config editor | `configPath` |
 | `log` | Widget -> Companion | Write a log message to `companion.log` | `message` |
+| `config-updated` | Companion -> Widget | Notify widget that config was saved in editor | (none) |
 
 ### Response Statuses
 
 - `ok` / `success` -- action completed
 - `error` -- failed, `error` field has message
 - `filenotfound` -- config file missing (load-config)
+- `parseerror` -- config JSON could not be deserialized (load-config)
 
 ## Key Constraints
 
@@ -76,13 +91,13 @@ All communication uses `ValueSet` messages over `AppServiceConnection`. Every re
 - Launched by widget via `FullTrustProcessLauncher` on load
 - Named mutex (`Local\LaunchDeckCompanion`) prevents duplicate instances; uses `mutex.WaitOne(500)` (500ms timeout) rather than immediate exit
 - Logs diagnostics to `%LOCALAPPDATA%\LaunchDeck\companion.log` via `Log.cs`
-- If the connection drops, the widget retries via `TryRelaunchCompanion()` with exponential backoff (1s, 2s, 4s)
-- Exits when App Service connection closes (Game Bar dismisses widget)
+- Registers a `ServiceClosed` handler that signals an exit event, so the companion exits when the App Service connection closes (Game Bar dismisses widget)
+- On the widget side, the `ServiceClosed` handler sets `CompanionConnection = null` and calls `TryRelaunchCompanion()` with exponential backoff (1s, 2s, 4s) to re-establish the connection
 - `OutputType=WinExe` -- no console window
 
 ### Game Bar Integration
-- Widget registered as `microsoft.gameBarUIExtension` in Package.appxmanifest
-- Hardcoded dark theme (`#202020` background, `RequestedTheme="Dark"`) -- subscribes to Game Bar opacity events but not theme events
+- Widget registered as `microsoft.gameBarUIExtension` in `LaunchDeck.Package/Package.appxmanifest` (not the UWP project's own manifest)
+- Hardcoded dark theme (`#202020` background, `RequestedTheme="Dark"`) -- subscribes to Game Bar `RequestedOpacityChanged` and `VisibleChanged` events (opacity adjusts background alpha; visibility triggers config reload) but not theme events
 - Deploy via `deploy.ps1` (`Add-AppxPackage -Register`) or VS (F5)
 
 ## Config

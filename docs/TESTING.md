@@ -55,9 +55,11 @@ Tests the shared configuration model (`LaunchDeck.Shared.ConfigModels`) -- JSON 
 
 Source under test: `LaunchDeck.Shared/ConfigModels.cs`
 
-### LaunchHandlerTests (5 tests)
+Note: `ConfigModels.cs` has additional coverage from ConfigParseTests (14 tests) and ConfigLoaderPathTests (4 tests), which test the `ParseJson` manual parser and path resolution utilities respectively.
 
-Tests the companion process launch logic (`LaunchDeck.Companion.LaunchHandler`), specifically the `BuildProcessStartInfo` static method.
+### LaunchHandlerTests (11 tests)
+
+Tests the companion process launch logic (`LaunchDeck.Companion.LaunchHandler`) -- `BuildProcessStartInfo` static method and `Launch` failure path.
 
 | Test | What it verifies |
 |------|-----------------|
@@ -66,6 +68,9 @@ Tests the companion process launch logic (`LaunchDeck.Companion.LaunchHandler`),
 | `BuildProcessStartInfo_Url_SetsFileNameToUrl` | URL type sets `FileName` to the URL, `UseShellExecute = true` |
 | `BuildProcessStartInfo_Store_SetsFileNameToProtocol` | Store type sets `FileName` to the protocol URI |
 | `BuildProcessStartInfo_UnknownType_ThrowsArgumentException` | Unknown type string throws `ArgumentException` |
+| `Launch_InvalidPath_ReturnsFailureWithError` | Launching a nonexistent EXE returns `success = false` with a non-null error message |
+| `BuildProcessStartInfo_IsCaseInsensitive` (Theory, 4 cases) | Type string matching is case-insensitive (`"EXE"`, `"Exe"`, `"URL"`, `"Store"`) |
+| `BuildProcessStartInfo_UrlAndStore_IgnoresArgs` (Theory, 2 cases) | URL and Store types ignore the `args` parameter (empty `Arguments`) |
 
 Source under test: `LaunchDeck.Companion/LaunchHandler.cs`
 
@@ -119,21 +124,104 @@ Tests the editor data model (`LaunchDeck.Companion.Editor.EditorModel`) -- add, 
 
 Source under test: `LaunchDeck.Companion/Editor/EditorModel.cs`
 
-### ExePickerTests (5 tests)
+### ConfigLoaderPathTests (4 tests)
 
-Tests the EXE picker logic (`LaunchDeck.Companion.ExePicker`) for display name extraction and config manipulation.
+Tests `ConfigLoader.GetDefaultConfigPath` and `ConfigLoader.StripPackagePath` -- the path resolution logic that ensures the UWP widget and Win32 companion resolve the same config file.
 
 | Test | What it verifies |
 |------|-----------------|
-| `GetDisplayName_Notepad_ReturnsFileDescription` | Reads `FileDescription` from `notepad.exe` version info; expects `"Notepad"` |
-| `GetDisplayName_NonexistentExe_ReturnsFileNameWithoutExtension` | Falls back to filename stem when EXE does not exist |
-| `GetDisplayName_NullPath_ReturnsUnknown` | Null path returns `"Unknown"` |
-| `AppendToConfig_AddsNewItem` | Adds a new EXE item to config; checks name, type, and path |
-| `AppendToConfig_DoesNotAddDuplicate` | Adding the same path twice results in only one item |
+| `GetDefaultConfigPath_EndsWithExpectedPath` | Default path ends with `LaunchDeck\config.json` |
+| `StripPackagePath_RemovesPackagesSegment` | Strips the `Packages\<id>\LocalState` suffix from a UWP-virtualized path |
+| `StripPackagePath_LeavesNormalPathUnchanged` | Non-virtualized paths pass through unchanged |
+| `StripPackagePath_IsCaseInsensitive` | Detects the `Packages` segment regardless of casing |
 
-Source under test: `LaunchDeck.Companion/ExePicker.cs`
+Source under test: `LaunchDeck.Shared/ConfigModels.cs`
 
-Note: `GetDisplayName_Notepad_ReturnsFileDescription` reads version info from a real EXE on disk. It is Windows-specific.
+### ConfigParseTests (14 tests)
+
+Tests `ConfigLoader.ParseJson` -- the manual `JsonDocument` parser that replaces `JsonSerializer.Deserialize` in the UWP widget. .NET Native's AOT compiler silently ignores `[JsonPropertyName]` attributes, so the widget uses this hand-written parser instead.
+
+| Test | What it verifies |
+|------|-----------------|
+| `ParseJson_LowercaseProperties_ParsesCorrectly` | Parses lowercase JSON property names (the format the companion produces) |
+| `ParseJson_PascalCaseProperties_ParsesCorrectly` | Parses PascalCase JSON property names |
+| `ParseJson_ExeType_CaseInsensitive` | `"exe"` and `"EXE"` both parse to `LaunchItemType.Exe` |
+| `ParseJson_UrlType_CaseInsensitive` | `"url"` and `"Url"` both parse to `LaunchItemType.Url` |
+| `ParseJson_StoreType_CaseInsensitive` | `"store"` and `"STORE"` both parse to `LaunchItemType.Store` |
+| `ParseJson_AllThreeTypes_InOneConfig` | A config with all three item types parses all correctly |
+| `ParseJson_EmptyItemsArray_ReturnsEmptyConfig` | Empty `items` array returns an empty config, not null |
+| `ParseJson_MissingItemsProperty_ReturnsEmptyConfig` | JSON without an `items` property returns an empty config |
+| `ParseJson_NullItems_ReturnsEmptyConfig` | Explicit `null` for `items` returns an empty config |
+| `ParseJson_OptionalFields_NullWhenAbsent` | `Args` and `Icon` are null when not present in JSON |
+| `ParseJson_OptionalFields_NullWhenExplicitlyNull` | `Args` and `Icon` are null when explicitly set to `null` in JSON |
+| `ParseJson_OptionalFields_PresentWhenProvided` | `Args` and `Icon` are populated when present |
+| `ParseJson_MultipleItems_AllParsed` | Four items with mixed types and optional fields all parse correctly |
+| `ParseJson_MatchesJsonSerializerOutput` | Round-trips a config through `JsonSerializer.Serialize` then `ParseJson`; verifies identical data |
+
+Source under test: `LaunchDeck.Shared/ConfigModels.cs`
+
+### IconExtractorCacheTests (5 tests)
+
+Tests the icon cache hit/stale/miss behavior for both EXE icons and favicons (`LaunchDeck.Companion.IconExtractor`).
+
+| Test | What it verifies |
+|------|-----------------|
+| `GetIconCacheDir_CreatesDirectory` | Returns a path ending in `icons` and ensures the directory exists |
+| `ExtractFromExe_CacheHit_ReturnsCachedFile` | Second extraction returns the same cached file without rewriting it |
+| `ExtractFromExe_StaleCache_ReExtracts` | Cache file older than the source EXE is regenerated |
+| `FetchFaviconAsync_FreshCache_ReturnsCachedFile` | Favicon within the 7-day TTL is returned from cache without re-fetching |
+| `FetchFaviconAsync_StaleCache_DoesNotReturnStaleFile` | Favicon older than 7 days is not served stale; re-fetch failure returns failure |
+
+Source under test: `LaunchDeck.Companion/IconExtractor.cs`
+
+Note: EXE cache tests depend on `C:\Windows\notepad.exe`. Favicon tests use temp directories with synthetic cache files.
+
+### IconExtractorCustomIconTests (4 tests)
+
+Tests `IconExtractor.LoadCustomIcon` -- loading user-selected icon files (PNG, ICO) and converting them to PNG bytes for IPC transport.
+
+| Test | What it verifies |
+|------|-----------------|
+| `LoadCustomIcon_PngFile_ReturnsBytesAndSuccess` | A valid PNG file returns success with non-empty byte data |
+| `LoadCustomIcon_IcoFile_ConvertsToPngBytes` | An ICO file is converted to PNG bytes (verified by PNG magic bytes `89 50 4E 47`) |
+| `LoadCustomIcon_NonexistentFile_ReturnsFailure` | A nonexistent path returns failure with null data |
+| `LoadCustomIcon_UnsupportedExtension_ReturnsFailure` | A `.txt` file returns failure (unsupported extension) |
+
+Source under test: `LaunchDeck.Companion/IconExtractor.cs`
+
+Note: `LoadCustomIcon_IcoFile_ConvertsToPngBytes` extracts an icon from `C:\Windows\notepad.exe` to create the test ICO file.
+
+### IconExtractorStoreTests (3 tests)
+
+Tests `IconExtractor.ExtractStoreAppIcon` -- extracting icons from installed Store apps by AUMID.
+
+| Test | What it verifies |
+|------|-----------------|
+| `ExtractStoreAppIcon_KnownApp_ReturnsIconData` | Finds an installed app with an icon and extracts it successfully (skips if none available) |
+| `ExtractStoreAppIcon_InvalidAumid_ReturnsFailure` | A nonexistent package AUMID returns failure |
+| `ExtractStoreAppIcon_MalformedAumid_ReturnsFailure` | A malformed AUMID (no `!` separator) returns failure |
+
+Source under test: `LaunchDeck.Companion/IconExtractor.cs`
+
+Note: `ExtractStoreAppIcon_KnownApp_ReturnsIconData` uses `StoreAppEnumerator` to find a real installed app, so it is environment-dependent and will skip if no apps have resolvable icons.
+
+### StoreAppEnumeratorTests (7 tests)
+
+Tests `StoreAppEnumerator.GetInstalledApps` and `GetPackageFamilyName` -- enumerating installed Store/UWP apps and parsing AUMIDs.
+
+| Test | What it verifies |
+|------|-----------------|
+| `GetInstalledApps_ReturnsNonEmptyList` | At least one app is returned on a standard Windows installation |
+| `GetInstalledApps_AllAppsHaveNameAndAumid` | Every returned app has a non-empty `Name`, non-empty `Aumid`, and `Aumid` contains `!` |
+| `GetInstalledApps_ExcludesFrameworkPackages` | Framework packages (`Microsoft.NET`, `Microsoft.VCLibs`) are filtered out |
+| `GetInstalledApps_IsSortedByName` | Results are sorted alphabetically by display name (case-insensitive) |
+| `GetInstalledApps_ContainsKnownApp` | At least one Microsoft app is present in the results |
+| `ParseAumid_ExtractsPackageFamilyName` | Extracts the package family name from a well-formed AUMID (`SpotifyAB.SpotifyMusic_zpdnekdrzrea0`) |
+| `ParseAumid_InvalidFormat_ReturnsNull` | An AUMID without `!` returns null |
+
+Source under test: `LaunchDeck.Companion/StoreAppEnumerator.cs`
+
+Note: Most tests in this class are environment-dependent -- they query the real Windows package manager and will produce different results on different machines.
 
 ## Test Patterns
 
@@ -170,18 +258,20 @@ While `GetCacheFileName` and `GetFaviconUrl` are pure functions that are unit-te
 
 Registering the widget with Game Bar, handling activation, and managing the widget lifecycle all depend on the Game Bar host. These paths can only be tested by deploying the MSIX package and opening Game Bar.
 
-### Process Launching (`LaunchHandler.Launch`)
+### Process Launching (`LaunchHandler.Launch` -- success path)
 
-The `Launch` method calls `Process.Start`, which actually spawns a process. `BuildProcessStartInfo` is tested in isolation, but verifying that a process was actually launched is a side-effectful integration concern that is not covered.
+The `Launch` method calls `Process.Start`, which actually spawns a process. `BuildProcessStartInfo` is tested in isolation, and the failure path (nonexistent EXE) is covered by `Launch_InvalidPath_ReturnsFailureWithError`. However, verifying that a process was actually launched successfully is a side-effectful integration concern that is not covered.
 
 ## Testing Boundaries
 
 | Layer | Testable? | How |
 |-------|-----------|-----|
-| `LaunchDeck.Shared` (config models, loader, serialization) | Yes | xUnit unit tests |
-| `LaunchDeck.Companion` (launch logic, icon cache naming, favicon URL, exe picker) | Yes | xUnit unit tests |
-| `LaunchDeck.Companion` (icon extraction from real EXEs) | Partially | xUnit with known OS fixtures (`notepad.exe`) |
-| `LaunchDeck.Companion` (process launching) | No | Side-effectful; tested manually |
+| `LaunchDeck.Shared` (config models, loader, serialization, JSON parsing, path resolution) | Yes | xUnit unit tests |
+| `LaunchDeck.Companion` (launch logic, icon cache naming, favicon URL, editor model) | Yes | xUnit unit tests |
+| `LaunchDeck.Companion` (icon cache hit/stale behavior, custom icon loading) | Yes | xUnit with temp directories |
+| `LaunchDeck.Companion` (store app enumeration, AUMID parsing) | Yes | xUnit (environment-dependent) |
+| `LaunchDeck.Companion` (icon extraction from real EXEs, store app icon extraction) | Partially | xUnit with known OS fixtures (`notepad.exe`) and installed apps |
+| `LaunchDeck.Companion` (process launching -- success path) | No | Side-effectful; tested manually |
 | `LaunchDeck.Widget` (XAML UI, data binding, grid layout) | No | Requires Game Bar runtime; manual only |
 | App Service IPC (widget <-> companion) | No | Requires MSIX deployment; manual only |
 | MSIX packaging and activation | No | Requires deployment; manual only |
@@ -217,6 +307,7 @@ For areas that cannot be automated, follow this procedure:
 - **Unsaved changes prompt:** Make a change (add, edit, delete, or reorder), then close the window. Verify a themed dialog appears with Save / Don't Save / Cancel options.
 - **Store App Picker scrolling:** Open the Store App Picker and verify smooth scrolling with touch, keyboard arrows, and mouse wheel.
 - **Icon display:** Verify EXE items show extracted icons and URL items show favicons.
+- **Custom icon:** In the editor, set a custom icon (PNG or ICO) on an item. Save and verify the custom icon displays in the widget grid instead of the auto-extracted icon.
 - **Error handling:** Remove or corrupt `config.json`. Verify the widget shows an appropriate error state rather than crashing.
 - **IPC resilience:** Kill the companion process while the widget is open. Verify the widget handles the disconnection gracefully.
 

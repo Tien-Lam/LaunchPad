@@ -7,8 +7,8 @@ The solution (`LaunchDeck.sln`) contains five projects:
 | Project | Type | Target | Purpose |
 |---------|------|--------|---------|
 | `LaunchDeck.Shared` | .NET Standard 2.0 class library | `netstandard2.0` | Config models, JSON serialization (System.Text.Json 8.0.5). Referenced by both Widget and Companion. |
-| `LaunchDeck.Widget` | UWP XAML app | UAP 10.0.19041.0+ | Game Bar widget UI. Output type `AppContainerExe`. References Shared. |
-| `LaunchDeck.Companion` | .NET 10 WinExe | `net10.0-windows10.0.19041.0` | Full-trust Win32 companion process. Uses WindowsForms for file dialogs. References Shared. |
+| `LaunchDeck.Widget` | UWP XAML app | UAP (target 10.0.26100.0, min 10.0.19041.0) | Game Bar widget UI. Output type `AppContainerExe`. References Shared. |
+| `LaunchDeck.Companion` | .NET 10 WinExe | `net10.0-windows10.0.19041.0` | Full-trust Win32 companion process. Uses WPF for editor windows and WindowsForms for file dialogs. References Shared. |
 | `LaunchDeck.Tests` | .NET test project | `net10.0-windows10.0.19041.0` | Unit tests for Shared and Companion logic. |
 | `LaunchDeck.Package` | Windows Application Packaging (WAPPROJ) | MSIX | Packages Widget + Companion into a single MSIX bundle for deployment. |
 
@@ -58,13 +58,13 @@ The solution is configured for `Debug|x64` and `Release|x64` platform configurat
 ### Prerequisites
 
 - Visual Studio 2022 with the **Universal Windows Platform development** workload
-- Windows SDK 10.0.19041.0 or later (max tested: 10.0.26100.0)
+- Windows SDK 10.0.26100.0 (required as `TargetPlatformVersion`; minimum platform version is 10.0.19041.0)
 - .NET 10 SDK (for Companion)
 - NuGet packages:
   - `Microsoft.Gaming.XboxGameBar` 5.8.220627001 (Widget)
   - `Microsoft.NETCore.UniversalWindowsPlatform` 6.2.14 (Widget)
   - `System.Text.Json` 8.0.5 (Shared)
-  - `System.Drawing.Common` 8.0.0 (Companion)
+  - Companion has no explicit NuGet dependencies; `System.Drawing` is available implicitly via `<UseWindowsForms>true</UseWindowsForms>`
 
 ---
 
@@ -72,7 +72,14 @@ The solution is configured for `Debug|x64` and `Release|x64` platform configurat
 
 ### Primary method: `deploy.ps1`
 
-The `deploy.ps1` script is the primary deployment method. It kills running LaunchDeck processes, builds the solution with MSBuild (using `AppxBundle=Never`), and registers the package via `Add-AppxPackage -Register` (loose-file registration, no signing needed).
+The `deploy.ps1` script is the primary deployment method. It performs these steps:
+
+1. Kills any running `LaunchDeck.Companion` and `LaunchDeck.Widget` processes.
+2. Builds the full solution with MSBuild (`AppxBundle=Never`, Debug|x64).
+3. Locates the `.msix` (or `.msixbundle`) in `LaunchDeck.Package\AppPackages`.
+4. Extracts the MSIX to a layout directory (`LaunchDeck.Package\bin\x64\Debug\AppX`) using `ZipFile`. For `.msixbundle` files, extracts the bundle first, then the inner `.msix`.
+5. Removes any existing `LaunchDeck` package registration via `Remove-AppxPackage`.
+6. Registers the extracted layout via `Add-AppxPackage -Register` (loose-file registration, no signing needed).
 
 ```powershell
 .\deploy.ps1
@@ -125,7 +132,7 @@ The manifest (`Package.appxmanifest`) declares the following:
 ### Identity
 
 ```xml
-<Identity Name="34667TienLongLam.LaunchDeck" Publisher="CN=E37AAF35-..." Version="1.0.0.0" />
+<Identity Name="34667TienLongLam.LaunchDeck" Publisher="CN=E37AAF35-..." Version="1.0.6.0" />
 ```
 
 Target: `Windows.Desktop`, minimum SDK `10.0.19041.0`, max tested `10.0.26100.0`.
@@ -193,12 +200,12 @@ Declares the companion as a full-trust desktop process that runs outside the UWP
 <Extension Category="windows.activatableClass.proxyStub">
   <ProxyStub ClassId="00000355-0000-0000-C000-000000000046">
     <Path>Microsoft.Gaming.XboxGameBar.winmd</Path>
-    <!-- 19 interface registrations for IXboxGameBar* private interfaces -->
+    <!-- 22 interface registrations for IXboxGameBar* private interfaces -->
   </ProxyStub>
 </Extension>
 ```
 
-This registers COM proxy/stub interfaces required for the Game Bar SDK to communicate with the widget across process boundaries. The interfaces include `IXboxGameBarWidgetHost` (versions 1-6), `IXboxGameBarWidgetPrivate` (versions 1-4), `IXboxGameBarWidgetControlHost`, `IXboxGameBarWidgetForegroundWorkerHost`, and various other SDK-internal interfaces. These are standard boilerplate required by `Microsoft.Gaming.XboxGameBar` and should not be modified.
+This registers 22 COM proxy/stub interfaces required for the Game Bar SDK to communicate with the widget across process boundaries. The interfaces include `IXboxGameBarWidgetHost` (versions 1-6), `IXboxGameBarWidgetPrivate` (versions 1-4), `IXboxGameBarWidgetControlHost`, `IXboxGameBarWidgetForegroundWorkerHost`, `IXboxGameBarWidgetForegroundWorkerPrivate`, `IXboxGameBarWidgetActivatedEventArgsPrivate`, `IXboxGameBarNavigationKeyCombo`, `IXboxGameBarAppTargetHost`, `IXboxGameBarAppTargetInfo`, `IXboxGameBarActivityHost`, `IXboxGameBarHotkeyManagerHost`, `IXboxGameBarWidgetAuthHost`, `IXboxGameBarWidgetNotificationHost`, and `IXboxGameBarWidgetNotificationPrivate`. These are standard boilerplate required by `Microsoft.Gaming.XboxGameBar` and should not be modified.
 
 ### Capabilities
 

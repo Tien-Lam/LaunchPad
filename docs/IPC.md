@@ -30,8 +30,9 @@ The App Service runs in-process with the widget (background task), giving the co
 1. The system calls `OnBackgroundActivated` when the companion opens the connection.
 2. The widget checks `args.TaskInstance.TriggerDetails` for `AppServiceTriggerDetails`.
 3. Stores the `AppServiceConnection` in the static `App.CompanionConnection` property, making it available to all widget code.
-4. Registers a `Canceled` handler on the background task that clears `CompanionConnection` and completes the deferral.
-5. On app suspension (`OnSuspending`), `CompanionConnection` is set to `null`.
+4. Registers a `ServiceClosed` handler on `_companionConnection` that nulls `CompanionConnection` and calls `TryRelaunchCompanion()` — this is the actual reconnection trigger when the companion process exits or the pipe breaks.
+5. Registers a `Canceled` handler on the background task that disposes the `AppServiceConnection` (to trigger `ServiceClosed` on the companion side), clears `CompanionConnection`, and completes the deferral.
+6. On app suspension (`OnSuspending`), `CompanionConnection` is set to `null`.
 
 ### Connection Teardown
 
@@ -90,9 +91,9 @@ No exceptions are thrown to callers. All methods return result tuples or nullabl
 
 ### `launch`
 
-Launches an application via `Process.Start` with `UseShellExecute = true`. For EXE launches, the companion also calls `SetForegroundWindow` on the launched process to bring it to the foreground.
+Launches an application via `Process.Start` with `UseShellExecute = true`. For EXE launches, the companion also calls `NativeMethods.FocusProcessAsync`, which waits for the process's main window and then calls `ShowWindow(SW_RESTORE)` followed by `SetForegroundWindow` to restore and bring the window to the foreground.
 
-**Note:** The widget prefers `XboxGameBarWidget.LaunchUriAsync` for all item types — it handles overlay dismissal and app focus automatically. URL and Store items always use it. EXE items without arguments use it with a `file:` URI. The `launch` IPC action is the fallback for EXE items with arguments or when `LaunchUriAsync` is unavailable. When the companion handles the launch, it also calls `SetForegroundWindow` on the launched process.
+**Note:** The widget prefers `XboxGameBarWidget.LaunchUriAsync` for all item types — it handles overlay dismissal and app focus automatically. URL and Store items always use it. EXE items without arguments use it with a `file:` URI. The `launch` IPC action is the fallback for EXE items with arguments or when `LaunchUriAsync` is unavailable. When the companion handles the launch, it also calls `ShowWindow(SW_RESTORE)` and `SetForegroundWindow` on the launched process via `NativeMethods.FocusProcessAsync`.
 
 **Request:**
 
@@ -179,7 +180,7 @@ ValueSet {
 
 ### `fetch-favicon`
 
-Downloads a website's favicon via Google's favicon service (`https://www.google.com/s2/favicons?domain=<host>&sz=64`) and returns it as base64-encoded PNG data. Uses SHA-256 hash of the URL for cache filenames. Returns a cached result immediately if the cache file already exists.
+Downloads a website's favicon via Google's favicon service (`https://www.google.com/s2/favicons?domain=<host>&sz=64`) and returns it as base64-encoded PNG data. Uses SHA-256 hash of the URL for cache filenames. Returns a cached result if the cache file exists and is less than 7 days old; older cache files are re-fetched.
 
 **Request:**
 
@@ -556,7 +557,7 @@ Widget UI                CompanionClient              Companion
    |                           |                          |
    |                           |       (user edits config in editor)
    |                           |                          |
-   |                           |       User clicks "Save & Refresh"
+   |                           |       User clicks "Save and Refresh"
    |                           |                          | ConfigLoader.Save(path, config)
    |                           |                          |
    |   { action: "config-updated" }                       |
@@ -580,13 +581,15 @@ Widget UI                CompanionClient              Companion
 | File                                              | Role                                |
 |---------------------------------------------------|-------------------------------------|
 | `LaunchDeck.Widget/App.xaml.cs`                    | Connection setup (server/receiver)  |
+| `LaunchDeck.Widget/LaunchDeckWidget.xaml.cs`       | Main widget page, orchestrates IPC calls |
 | `LaunchDeck.Widget/Services/CompanionClient.cs`    | Widget-side request helpers         |
 | `LaunchDeck.Companion/Program.cs`                  | Connection setup + action dispatch  |
 | `LaunchDeck.Companion/LaunchHandler.cs`            | Process launch logic                |
 | `LaunchDeck.Companion/IconExtractor.cs`            | Icon extraction and favicon fetch   |
-| `LaunchDeck.Companion/ExePicker.cs`                | Display name extraction, config append utility |
 | `LaunchDeck.Companion/Log.cs`                      | File logger for companion diagnostics |
-| `LaunchDeck.Companion/EditorManager.cs`            | WPF editor window lifecycle management |
+| `LaunchDeck.Companion/NativeMethods.cs`            | `SetForegroundWindow`/`ShowWindow` P/Invoke for focusing launched processes |
+| `LaunchDeck.Companion/StoreAppEnumerator.cs`       | Enumerates installed Store/UWP packages for icon extraction |
+| `LaunchDeck.Companion/Editor/EditorManager.cs`     | WPF editor window lifecycle management |
 | `LaunchDeck.Shared/ConfigModels.cs`                | Config types, loader, and saver     |
 | `LaunchDeck.Package/Package.appxmanifest`          | App Service declaration             |
 

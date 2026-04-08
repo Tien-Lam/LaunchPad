@@ -5,6 +5,8 @@
 
 An Xbox Game Bar widget that launches apps, URLs, and Store apps from a configurable tile grid overlay.
 
+[Xbox mode](https://support.microsoft.com/en-us/topic/windows-gaming-full-screen-experience-67fb8d12-5467-4a95-8adf-0a10789576ab) (formerly Xbox Full Screen Experience) turns Windows into a console-like fullscreen shell, but its library is game-focused — there's no easy way to launch non-game apps, utilities, or URLs without switching back to the desktop. LaunchDeck fills that gap as a Game Bar widget you can open with Win+G to launch anything without leaving the experience.
+
 <!-- TODO: Add screenshot here -->
 
 ## Install
